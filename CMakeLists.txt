@@ -4,7 +4,7 @@ project(LaundryKiosk)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Quick)
 
 add_executable(LaundryKiosk
     src/main.cpp
@@ -16,6 +16,8 @@ add_executable(LaundryKiosk
     src/pages/RunningStatusPage.h
     src/pages/AdminLoginPage.h
     src/pages/AdminDashboardPage.h
+    src/main.qml
+    src/resources.qrc
 )
 
-target_link_libraries(LaundryKiosk Qt6::Widgets)
+target_link_libraries(LaundryKiosk Qt6::Widgets Qt6::Quick)
