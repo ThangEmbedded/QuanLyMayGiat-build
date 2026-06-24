@@ -6,15 +6,10 @@
 #include "pages/AdminLoginPage.h"
 #include "pages/AdminDashboardPage.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
+    ui.setupUi(this);
 
     stackedWidget = new QStackedWidget;
     setCentralWidget(stackedWidget);
@@ -40,5 +35,4 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
