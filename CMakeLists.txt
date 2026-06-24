@@ -10,6 +10,12 @@ add_executable(LaundryKiosk
     src/main.cpp
     src/MainWindow.h
     src/MainWindow.cpp
+    src/pages/HomePage.h
+    src/pages/MachineDetailPage.h
+    src/pages/PaymentPage.h
+    src/pages/RunningStatusPage.h
+    src/pages/AdminLoginPage.h
+    src/pages/AdminDashboardPage.h
 )
 
 target_link_libraries(LaundryKiosk Qt6::Widgets)
