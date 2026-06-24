@@ -4,9 +4,7 @@
 #include <QMainWindow>
 #include <QStackedWidget>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+class Ui_MainWindow;
 
 class MainWindow : public QMainWindow
 {
@@ -17,7 +15,7 @@ public:
     ~MainWindow();
 
 private:
-    Ui::MainWindow ui;
+    Ui_MainWindow *ui;
     QStackedWidget *stackedWidget;
 };
 
