@@ -1,0 +1,22 @@
+{
+	"BUILD_DIR" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/build/LaundryKiosk_autogen",
+	"CMAKE_BINARY_DIR" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/build",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/toppi/work_data/1_projects/QuanLyMayGiat",
+	"CMAKE_SOURCE_DIR" : "/home/toppi/work_data/1_projects/QuanLyMayGiat",
+	"INCLUDE_DIR" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/build/LaundryKiosk_autogen/include",
+	"INPUTS" : 
+	[
+		"/home/toppi/work_data/1_projects/QuanLyMayGiat/src/resources/style.qss"
+	],
+	"LOCK_FILE" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/LaundryKiosk_autogen.dir/AutoRcc_resources_UVLADIE3JM_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "resources" ],
+	"OUTPUT_CHECKSUM" : "UVLADIE3JM",
+	"OUTPUT_NAME" : "qrc_resources.cpp",
+	"RCC_EXECUTABLE" : "/usr/lib/qt6/libexec/rcc",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/LaundryKiosk_autogen.dir/AutoRcc_resources_UVLADIE3JM_Used.txt",
+	"SOURCE" : "/home/toppi/work_data/1_projects/QuanLyMayGiat/src/resources.qrc",
+	"VERBOSITY" : 0
+}

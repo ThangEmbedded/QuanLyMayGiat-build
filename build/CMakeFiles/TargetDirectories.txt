@@ -1,0 +1,4 @@
+/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/LaundryKiosk.dir
+/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/edit_cache.dir
+/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/rebuild_cache.dir
+/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/LaundryKiosk_autogen.dir
