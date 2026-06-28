@@ -1,87 +1,64 @@
 #include "gpio.hpp"
-
-#include <gpiod.hpp>
-#include <iostream>
+#include <gpiod.h>
 #include <map>
 
 namespace gpio
 {
 
-static gpiod::chip chip("/dev/gpiochip0");
-static std::map<unsigned int, gpiod::line> lines;
+static gpiod_chip* chip = nullptr;
+static std::map<unsigned int, gpiod_line*> lines;
 
 bool Gpio::init()
 {
-    return true;
+    chip = gpiod_chip_open_by_name("gpiochip0");
+    return chip != nullptr;
 }
 
 bool Gpio::setOutput(unsigned int pin)
 {
-    try
-    {
-        auto line = chip.get_line(pin);
+    gpiod_line* line = gpiod_chip_get_line(chip, pin);
 
-        line.request({
-            "LaundryGPIO",
-            gpiod::line_request::DIRECTION_OUTPUT,
-            0
-        });
+    if(!line) return false;
 
-        lines.emplace(pin, std::move(line));
-
-        return true;
-    }
-    catch(const std::exception& e)
-    {
-        std::cout << e.what() << std::endl;
+    if(gpiod_line_request_output(line, "relay", 0) < 0)
         return false;
-    }
+
+    lines[pin] = line;
+    return true;
 }
 
 bool Gpio::setInput(unsigned int pin)
 {
-    try
-    {
-        auto line = chip.get_line(pin);
+    gpiod_line* line = gpiod_chip_get_line(chip, pin);
 
-        line.request({
-            "LaundryGPIO",
-            gpiod::line_request::DIRECTION_INPUT,
-            0
-        });
+    if(!line) return false;
 
-        lines.emplace(pin, std::move(line));
-
-        return true;
-    }
-    catch(...)
-    {
+    if(gpiod_line_request_input(line, "relay") < 0)
         return false;
-    }
+
+    lines[pin] = line;
+    return true;
 }
 
 bool Gpio::write(unsigned int pin, Level level)
 {
     auto it = lines.find(pin);
+    if(it == lines.end()) return false;
 
-    if(it == lines.end())
-        return false;
-
-    it->second.set_value(level == Level::High);
-
-    return true;
+    return gpiod_line_set_value(
+        it->second,
+        level == Level::High ? 1 : 0
+    ) == 0;
 }
 
 Level Gpio::read(unsigned int pin)
 {
     auto it = lines.find(pin);
+    if(it == lines.end()) return Level::Low;
 
-    if(it == lines.end())
-        return Level::Low;
+    int v = gpiod_line_get_value(it->second);
 
-    return it->second.get_value()
-            ? Level::High
-            : Level::Low;
+    return v == 1 ? Level::High : Level::Low;
 }
 
 }

@@ -16,7 +16,7 @@ include_directories(
 # libgpiod (Pi + Host nếu cài)
 # =========================
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GPIOD REQUIRED libgpiodcxx)
+pkg_check_modules(GPIOD REQUIRED libgpiod)
 
 # =========================
 # GPIO driver
