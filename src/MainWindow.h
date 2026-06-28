@@ -2,9 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QStackedWidget>
-
-class Ui_MainWindow;
+#include <QList>
+#include "widgets/TransitionStackedWidget.h"
+#include "pages/HomePage.h"
+#include "pages/MachineDetailPage.h"
+#include "pages/PaymentPage.h"
+#include "pages/RunningStatusPage.h"
+#include "pages/AdminLoginPage.h"
+#include "pages/AdminDashboardPage.h"
 
 class MainWindow : public QMainWindow
 {
@@ -15,8 +20,20 @@ public:
     ~MainWindow();
 
 private:
-    Ui_MainWindow *ui;
-    QStackedWidget *stackedWidget;
+    TransitionStackedWidget *stackedWidget;
+    
+    HomePage *homePage;
+    MachineDetailPage *machineDetailPage;
+    PaymentPage *paymentPage;
+    RunningStatusPage *runningStatusPage;
+    AdminLoginPage *adminLoginPage;
+    AdminDashboardPage *adminDashboardPage;
+
+    QList<MachineData> m_machines;
+
+    void initializeMachines();
+    void setupConnections();
+    void refreshAllPages();
 };
 
 #endif // MAINWINDOW_H
