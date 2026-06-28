@@ -1,2 +1,0 @@
-/usr/bin/ar qc libgpio_driver.a CMakeFiles/gpio_driver.dir/src/drivers/gpio/gpio.cpp.o
-/usr/bin/ranlib libgpio_driver.a

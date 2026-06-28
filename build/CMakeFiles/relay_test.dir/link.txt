@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/relay_test.dir/tests/hardware/relay_test.cpp.o -o tests/relay_test  librelay_driver.a libgpio_driver.a -lgpiodcxx 

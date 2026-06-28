@@ -1,2 +1,0 @@
-/usr/bin/ar qc librelay_driver.a CMakeFiles/relay_driver.dir/src/drivers/relay/relay.cpp.o
-/usr/bin/ranlib librelay_driver.a

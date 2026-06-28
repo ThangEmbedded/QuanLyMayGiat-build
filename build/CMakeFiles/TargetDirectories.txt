@@ -1,5 +1,0 @@
-/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/gpio_driver.dir
-/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/relay_driver.dir
-/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/relay_test.dir
-/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/edit_cache.dir
-/home/toppi/work_data/1_projects/QuanLyMayGiat/build/CMakeFiles/rebuild_cache.dir
