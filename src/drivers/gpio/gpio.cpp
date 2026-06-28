@@ -1,6 +1,7 @@
 #include "gpio.hpp"
 #include <gpiod.h>
 #include <map>
+#include <stdexcept>
 
 namespace gpio
 {
@@ -11,10 +12,23 @@ static std::map<unsigned int, gpiod_line*> lines;
 bool Gpio::init()
 {
     chip = gpiod_chip_open_by_name("gpiochip0");
-    return chip != nullptr;
+    if (!chip) {
+    throw std::runtime_error("Failed to open GPIO chip");
+}
+return true;
 }
 
 bool Gpio::setOutput(unsigned int pin)
+{
+    gpiod_line* line = gpiod_chip_get_line(chip, pin);
+    if (!line) {
+        throw std::runtime_error("Failed to get line for pin");
+    }
+    if (gpiod_line_request_output(line, "relay", 0) < 0) {
+        throw std::runtime_error("Failed to request line as output");
+    }
+    lines[pin] = line;
+
 {
     gpiod_line* line = gpiod_chip_get_line(chip, pin);
 
@@ -30,6 +44,16 @@ bool Gpio::setOutput(unsigned int pin)
 bool Gpio::setInput(unsigned int pin)
 {
     gpiod_line* line = gpiod_chip_get_line(chip, pin);
+    if (!line) {
+        throw std::runtime_error("Failed to get line for pin");
+    }
+    if (gpiod_line_request_input(line, "relay") < 0) {
+        throw std::runtime_error("Failed to request line as input");
+    }
+    lines[pin] = line;
+
+{
+    gpiod_line* line = gpiod_chip_get_line(chip, pin);
 
     if(!line) return false;
 
@@ -43,7 +67,9 @@ bool Gpio::setInput(unsigned int pin)
 bool Gpio::write(unsigned int pin, Level level)
 {
     auto it = lines.find(pin);
-    if(it == lines.end()) return false;
+    if(it == lines.end()) {
+        throw std::runtime_error("Pin not initialized");
+    }
 
     return gpiod_line_set_value(
         it->second,
@@ -54,7 +80,9 @@ bool Gpio::write(unsigned int pin, Level level)
 Level Gpio::read(unsigned int pin)
 {
     auto it = lines.find(pin);
-    if(it == lines.end()) return Level::Low;
+    if(it == lines.end()) {
+        throw std::runtime_error("Pin not initialized");
+    }
 
     int v = gpiod_line_get_value(it->second);
 
