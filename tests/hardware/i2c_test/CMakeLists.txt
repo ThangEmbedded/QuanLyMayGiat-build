@@ -10,11 +10,11 @@ add_executable(i2c_test
 )
 
 target_sources(i2c_test PRIVATE
-    ../../../drivers/i2c/i2c.cpp
+    ../../../src/drivers/i2c/i2c.cpp
 )
 
 target_include_directories(i2c_test PRIVATE
-    ../../../drivers/i2c
+    ../../../src/drivers/i2c
 )
 
 target_compile_options(i2c_test PRIVATE
