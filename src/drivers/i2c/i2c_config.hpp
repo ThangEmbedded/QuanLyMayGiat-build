@@ -1,4 +1,8 @@
 #pragma once
 
-#define I2C_BUS "/dev/i2c-1"
-#define I2C_ADDRESS 0x48
+namespace driver::i2c
+{
+
+constexpr char DEFAULT_DEVICE[] = "/dev/i2c-1";
+
+}
