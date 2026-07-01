@@ -74,7 +74,7 @@ target_include_directories(ads1115_driver PUBLIC
 # I2C hardware test
 # =========================
 add_executable(i2c_test
-    src/tests/hardware/i2c_test.cpp
+    tests/hardware/i2c_test.cpp
 )
 
 target_link_libraries(i2c_test
@@ -85,7 +85,7 @@ target_link_libraries(i2c_test
 # ADS1115 hardware test
 # =========================
 add_executable(ads1115_test
-    src/tests/hardware/ads1115_test.cpp
+    tests/hardware/ads1115_test/main.cpp
 )
 
 target_link_libraries(ads1115_test
@@ -108,7 +108,7 @@ set_target_properties(ads1115_test PROPERTIES
 # Relay hardware test
 # =========================
 add_executable(relay_test
-    tests/hardware/relay_test.cpp
+    tests/hardware/relay_test/main.cpp
 )
 
 target_link_libraries(relay_test
