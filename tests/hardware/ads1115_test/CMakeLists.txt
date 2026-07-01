@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 project(ads1115_test)
 
 # Add executable
-add_executable(ads1115_test ads1115_test.cpp ads1115.cpp)
+add_executable(ads1115_test ../src/drivers/ads1115/ads1115_test.cpp ../src/drivers/ads1115/ads1115.cpp)
 
 # Link the necessary libraries
 # Adjust this to link against your actual I2C implementation if needed
