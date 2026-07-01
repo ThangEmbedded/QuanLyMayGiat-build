@@ -13,5 +13,6 @@ add_executable(ads1115_test
 )
 
 target_include_directories(ads1115_test PRIVATE
-    ../../../src
+     /home/toppi/work_data/1_projects/QuanLyMayGiat/src/drivers/ads1115
+     /home/toppi/work_data/1_projects/QuanLyMayGiat/src/drivers/i2c
 )

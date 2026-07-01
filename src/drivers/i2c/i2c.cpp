@@ -30,7 +30,7 @@ bool LinuxI2c::open(std::string_view bus)
 
     if (fd_ < 0)
     {
-        std::cerr("I2C open failed : ")
+        std::cerr << "I2C open failed : " 
                   << bus
                   << " error="
                   << std::strerror(errno)
@@ -74,7 +74,7 @@ bool LinuxI2c::setSlave(uint8_t address)
 
     if (::ioctl(fd_, I2C_SLAVE, address) < 0)
     {
-        std::cerr("I2C set slave failed : 0x")
+        std::cerr << "I2C set slave failed : 0x"
                   << std::hex
                   << static_cast<int>(address)
                   << " error="
@@ -117,7 +117,7 @@ bool LinuxI2c::write(const uint8_t* data,
 
     if (ret != static_cast<ssize_t>(length))
     {
-        std::cerr("I2C write failed : ")
+        std::cerr << "I2C write failed : " 
                   << std::strerror(errno)
                   << std::endl;
 
@@ -144,7 +144,7 @@ bool LinuxI2c::read(uint8_t* data,
 
     if (ret != static_cast<ssize_t>(length))
     {
-        std::cerr("I2C read failed : ")
+        std::cerr << "I2C read failed : " 
                   << std::strerror(errno)
                   << std::endl;
 
@@ -191,7 +191,7 @@ bool LinuxI2c::writeRead(const uint8_t* tx,
 
     if (::ioctl(fd_, I2C_RDWR, &ioctlData) < 0)
     {
-        std::cerr("I2C writeRead failed : ")
+        std::cerr << "I2C writeRead failed : " 
                   << std::strerror(errno)
                   << std::endl;
 
