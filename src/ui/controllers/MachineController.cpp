@@ -29,8 +29,8 @@ bool MachineController::initialize() {
     }
 
     if (!m_relayService) {
-        emit operationFailed("Không tìm thấy relay service.");
-        return false;
+        // emit operationFailed("Không tìm thấy relay service.");
+        // return false;
     }
 
     if (!m_relayService->initialize()) {
