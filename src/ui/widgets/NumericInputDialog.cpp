@@ -1,14 +1,10 @@
 #include "NumericInputDialog.h"
 
-#include <QApplication>
 #include <QEvent>
 #include <QGridLayout>
-#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QPushButton>
-#include <QScreen>
 #include <QVBoxLayout>
-#include <QWidget>
 
 NumericInputDialog::NumericInputDialog(const QString &title,
                                        const QString &initialValue,
@@ -25,129 +21,103 @@ NumericInputDialog::NumericInputDialog(const QString &title,
     setAttribute(Qt::WA_StyledBackground, true);
     installEventFilter(this);
 
-    QSize overlaySize(800, 480);
+    // Compact kiosk keypad.  It intentionally does NOT cover the whole screen:
+    // the user still sees the current page context, and the touch target area
+    // stays predictable on linuxfb/eglfs.
+    setFixedSize(360, 420);
     if (parent && parent->window()) {
-        overlaySize = parent->window()->size();
-    } else if (QGuiApplication::primaryScreen()) {
-        overlaySize = QGuiApplication::primaryScreen()->availableGeometry().size();
+        const QRect parentRect = parent->window()->geometry();
+        move(parentRect.center() - rect().center());
     }
-    setFixedSize(overlaySize);
 
     setStyleSheet(
         "QDialog {"
-        "  background: #f4f8fc;"
-        "}"
-        "QWidget#KeypadPanel {"
         "  background: #ffffff;"
-        "  border: 2px solid #d6e2f0;"
-        "  border-radius: 22px;"
+        "  border: 2px solid #b8c7d9;"
+        "  border-radius: 18px;"
         "}"
         "QLabel#KeypadTitle {"
-        "  color: #102033;"
-        "  font-size: 24px;"
-        "  font-weight: 900;"
-        "}"
-        "QLabel#KeypadHint {"
-        "  color: #66758a;"
-        "  font-size: 13px;"
-        "  font-weight: 600;"
-        "}"
-        "QLabel#KeypadDisplay {"
-        "  color: #102033;"
-        "  background: #f7fbff;"
-        "  border: 2px solid #c7d9ee;"
-        "  border-radius: 14px;"
-        "  font-size: 30px;"
-        "  font-weight: 900;"
-        "  min-height: 50px;"
-        "  padding: 4px 14px;"
-        "}"
-        "QPushButton#DigitButton {"
-        "  background: #ffffff;"
-        "  border: 2px solid #d9e3ef;"
-        "  border-radius: 14px;"
-        "  color: #111827;"
-        "  font-size: 27px;"
-        "  font-weight: 900;"
-        "  min-height: 54px;"
-        "}"
-        "QPushButton#DigitButton:pressed {"
-        "  background: #e5f1ff;"
-        "  border-color: #006dff;"
-        "}"
-        "QPushButton#CancelButton {"
-        "  background: #fff1f1;"
-        "  border: 2px solid #efb4b4;"
-        "  border-radius: 14px;"
-        "  color: #b3261e;"
-        "  font-size: 20px;"
-        "  font-weight: 900;"
-        "  min-height: 54px;"
-        "}"
-        "QPushButton#CancelButton:pressed { background: #ffdede; }"
-        "QPushButton#BackspaceButton {"
-        "  background: #eef3f8;"
-        "  border: 2px solid #bdc9d8;"
-        "  border-radius: 14px;"
-        "  color: #253140;"
-        "  font-size: 24px;"
-        "  font-weight: 900;"
-        "  min-height: 54px;"
-        "}"
-        "QPushButton#BackspaceButton:pressed { background: #dce7f2; }"
-        "QPushButton#OkButton {"
-        "  background: #006dff;"
-        "  border: 2px solid #0057cc;"
-        "  border-radius: 14px;"
-        "  color: #ffffff;"
+        "  color: #172033;"
         "  font-size: 22px;"
         "  font-weight: 900;"
-        "  min-height: 56px;"
         "}"
-        "QPushButton#OkButton:pressed { background: #0057cc; }"
+        "QLabel#KeypadDisplay {"
+        "  color: #0f172a;"
+        "  background: #f4f8ff;"
+        "  border: 2px solid #c9d8ea;"
+        "  border-radius: 12px;"
+        "  font-size: 30px;"
+        "  font-weight: 900;"
+        "  min-height: 54px;"
+        "  padding: 2px 12px;"
+        "}"
+        "QPushButton {"
+        "  border-radius: 12px;"
+        "  font-weight: 900;"
+        "}"
+        "QPushButton#DigitButton {"
+        "  background: #f8fafc;"
+        "  border: 2px solid #d4deea;"
+        "  color: #111827;"
+        "  font-size: 26px;"
+        "  min-height: 52px;"
+        "}"
+        "QPushButton#DigitButton:pressed {"
+        "  background: #dbeafe;"
+        "  border-color: #2563eb;"
+        "}"
+        "QPushButton#CancelButton {"
+        "  background: #fff5f5;"
+        "  border: 2px solid #f0b7b7;"
+        "  color: #b42318;"
+        "  font-size: 18px;"
+        "  min-height: 52px;"
+        "}"
+        "QPushButton#CancelButton:pressed { background: #fee2e2; }"
+        "QPushButton#BackspaceButton {"
+        "  background: #eef2f7;"
+        "  border: 2px solid #c7d0dd;"
+        "  color: #263142;"
+        "  font-size: 24px;"
+        "  min-height: 52px;"
+        "}"
+        "QPushButton#BackspaceButton:pressed { background: #dce6f2; }"
+        "QPushButton#OkButton {"
+        "  background: #2563eb;"
+        "  border: 2px solid #1d4ed8;"
+        "  color: #ffffff;"
+        "  font-size: 21px;"
+        "  min-height: 54px;"
+        "}"
+        "QPushButton#OkButton:pressed { background: #1d4ed8; }"
     );
 
-    QVBoxLayout *overlayLayout = new QVBoxLayout(this);
-    overlayLayout->setContentsMargins(0, 0, 0, 0);
-    overlayLayout->setSpacing(0);
-    overlayLayout->addStretch();
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(18, 16, 18, 18);
+    mainLayout->setSpacing(10);
 
-    QWidget *panel = new QWidget(this);
-    panel->setObjectName("KeypadPanel");
-    panel->setFixedSize(430, 430);
-
-    QVBoxLayout *mainLayout = new QVBoxLayout(panel);
-    mainLayout->setContentsMargins(22, 18, 22, 20);
-    mainLayout->setSpacing(8);
-
-    QLabel *titleLabel = new QLabel(title, panel);
+    QLabel *titleLabel = new QLabel(title, this);
     titleLabel->setObjectName("KeypadTitle");
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
 
-    QLabel *hint = new QLabel(passwordMode ? "Nhập mật khẩu bằng số" : "Nhập số phòng cần sử dụng", panel);
-    hint->setObjectName("KeypadHint");
-    hint->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(hint);
-
-    m_display = new QLabel(panel);
+    m_display = new QLabel(this);
     m_display->setObjectName("KeypadDisplay");
     m_display->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(m_display);
 
     QGridLayout *grid = new QGridLayout();
-    grid->setContentsMargins(0, 8, 0, 0);
+    grid->setContentsMargins(0, 4, 0, 0);
     grid->setHorizontalSpacing(8);
     grid->setVerticalSpacing(8);
 
-    auto addButton = [this, grid, panel](const QString &text,
-                                         int row,
-                                         int col,
-                                         const QString &objectName) {
-        QPushButton *button = new QPushButton(text, panel);
+    auto addButton = [this, grid](const QString &text,
+                                  int row,
+                                  int col,
+                                  const QString &objectName) {
+        QPushButton *button = new QPushButton(text, this);
         button->setObjectName(objectName);
         button->setFocusPolicy(Qt::NoFocus);
-        button->setCursor(Qt::PointingHandCursor);
         grid->addWidget(button, row, col);
         return button;
     };
@@ -167,15 +137,11 @@ NumericInputDialog::NumericInputDialog(const QString &title,
 
     mainLayout->addLayout(grid);
 
-    QPushButton *ok = new QPushButton("✓ XÁC NHẬN", panel);
+    QPushButton *ok = new QPushButton("XÁC NHẬN", this);
     ok->setObjectName("OkButton");
     ok->setFocusPolicy(Qt::NoFocus);
-    ok->setCursor(Qt::PointingHandCursor);
     connect(ok, &QPushButton::clicked, this, &NumericInputDialog::confirm);
     mainLayout->addWidget(ok);
-
-    overlayLayout->addWidget(panel, 0, Qt::AlignCenter);
-    overlayLayout->addStretch();
 
     refreshDisplay();
 }
@@ -238,7 +204,7 @@ void NumericInputDialog::refreshDisplay() {
     }
 
     if (m_value.isEmpty()) {
-        m_display->setText(m_passwordMode ? "••••" : "VD: 302");
+        m_display->setText(m_passwordMode ? "••••" : "Nhập số");
         return;
     }
 

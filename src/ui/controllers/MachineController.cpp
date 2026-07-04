@@ -225,10 +225,12 @@ void MachineController::onMinuteTick() {
 
 void MachineController::initializeMockMachines() {
     m_machines.clear();
-    m_machines.append({1, "Máy 1", MachineState::Running, "Phòng 302", 18, 45, "Giặt thường", "14:05", "14:50"});
-    m_machines.append({2, "Máy 2", MachineState::Running, "Phòng 108", 6, 40, "Giặt nhanh", "14:18", "14:58"});
-    m_machines.append({3, "Máy 3", MachineState::Open, "", 0, 45, "", "", ""});
-    m_machines.append({4, "Máy 4", MachineState::Offline, "", 0, 45, "", "", ""});
+
+    // Demo chạy relay thật: trạng thái khởi động phải an toàn và đồng bộ với relay OFF.
+    // Không khởi tạo sẵn Running/Offline vì UI có thể báo sai trạng thái phần cứng sau reboot.
+    for (int id = 1; id <= 4; ++id) {
+        m_machines.append({id, QString("Máy %1").arg(id), MachineState::Open, "", 0, 45, "", "", ""});
+    }
 }
 
 MachineData* MachineController::findMachine(int machineId) {

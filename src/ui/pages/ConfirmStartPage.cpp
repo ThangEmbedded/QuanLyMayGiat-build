@@ -57,7 +57,7 @@ ConfirmStartPage::ConfirmStartPage(QWidget *parent)
     addRow("Thời gian", m_durationLabel);
     addRow("Chi phí demo", m_priceLabel);
 
-    m_statusLabel = new QLabel("Demo hiện chỉ đổi trạng thái mock, chưa bật relay thật.", summaryCard);
+    m_statusLabel = new QLabel("Relay sẽ bật khi xác nhận khởi động. Máy chuyển sang trạng thái đang giặt.", summaryCard);
     m_statusLabel->setWordWrap(true);
     m_statusLabel->setStyleSheet("padding: 12px; border-radius: 10px; background-color: #eaf7ef; color: #006c49; font-weight: 600;");
     summaryLayout->addWidget(m_statusLabel);
@@ -87,7 +87,7 @@ ConfirmStartPage::ConfirmStartPage(QWidget *parent)
     m_roomInput->installEventFilter(this);
     actionLayout->addWidget(m_roomInput);
 
-    QLabel *hint = new QLabel("Nhấn xác nhận để chuyển máy sang trạng thái đang chạy trong mock controller.", actionCard);
+    QLabel *hint = new QLabel("Nhập số phòng, sau đó nhấn xác nhận để bật relay và khởi động máy.", actionCard);
     hint->setWordWrap(true);
     hint->setStyleSheet("font-size: 13px; color: #5f6f66;");
     actionLayout->addWidget(hint);
