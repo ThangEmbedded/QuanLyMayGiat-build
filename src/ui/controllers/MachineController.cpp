@@ -24,13 +24,13 @@ MachineData MachineController::machineById(int machineId) const {
 
 bool MachineController::initialize() {
     if (!m_hardwareService || !m_hardwareService->initialize()) {
-        emit operationFailed("Không thể khởi tạo hardware service.");
-        return false;
+        // emit operationFailed("Không thể khởi tạo hardware service.");
+        // return false;
     }
 
     if (!m_relayService) {
-        emit operationFailed("Không tìm thấy relay service.");
-        return false;
+        // emit operationFailed("Không tìm thấy relay service.");
+        // return false;
     }
 
     if (!m_relayService->initialize()) {
