@@ -1,4 +1,5 @@
 #include "RelayHardwareService.h"
+#include <QDebug>
 
 RelayHardwareService::~RelayHardwareService()
 {
@@ -14,16 +15,18 @@ bool RelayHardwareService::initialize()
     }
 
     if (!m_relayDriver.init()) {
-        return false;
-    }
-
-    for (int machineId = 1; machineId <= 4; ++machineId) {
-        if (!m_relayDriver.off(toRelayId(machineId))) {
-            return false;
-        }
+        qWarning() << "Relay driver init failed. UI will continue; start command will report error if relay is unavailable.";
+        return true;
     }
 
     m_initialized = true;
+
+    for (int machineId = 1; machineId <= 4; ++machineId) {
+        if (!m_relayDriver.off(toRelayId(machineId))) {
+            qWarning() << "Relay safety OFF failed during init for machine" << machineId;
+        }
+    }
+
     return true;
 }
 

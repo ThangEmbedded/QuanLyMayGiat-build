@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QTimer>
+#include <QDebug>
 #include <memory>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -61,6 +62,13 @@ void MainWindow::setupConnections() {
 
     connect(machineController, &MachineController::operationFailed,
             this, [this](const QString &message) {
+        // Relay initialization warnings must not block the kiosk UI.
+        // Actual start/stop failures are still shown to the user.
+        if (message.contains("relay service", Qt::CaseInsensitive) &&
+            message.contains("khởi tạo", Qt::CaseInsensitive)) {
+            qWarning() << message;
+            return;
+        }
         QMessageBox::warning(this, "Thao tác không thành công", message);
     });
 
