@@ -4,7 +4,6 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QTimer>
-#include <QDebug>
 #include <memory>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -62,11 +61,14 @@ void MainWindow::setupConnections() {
 
     connect(machineController, &MachineController::operationFailed,
             this, [this](const QString &message) {
-        // Relay initialization warnings must not block the kiosk UI.
-        // Actual start/stop failures are still shown to the user.
-        if (message.contains("relay service", Qt::CaseInsensitive) &&
-            message.contains("khởi tạo", Qt::CaseInsensitive)) {
-            qWarning() << message;
+        const QString lower = message.toLower();
+        if (lower.contains("relay")) {
+            // Relay errors are logged but do not block the kiosk UI with a modal popup.
+            // This avoids hiding the numeric keypad on Raspberry Pi when the relay driver
+            // is still settling after boot.
+            if (adminSetupPage) {
+                adminSetupPage->addLog(QString("Cảnh báo relay: %1").arg(message));
+            }
             return;
         }
         QMessageBox::warning(this, "Thao tác không thành công", message);

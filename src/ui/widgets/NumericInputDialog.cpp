@@ -1,12 +1,14 @@
 #include "NumericInputDialog.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QEvent>
 #include <QGridLayout>
+#include <QGuiApplication>
 #include <QKeyEvent>
-#include <QLabel>
 #include <QPushButton>
+#include <QScreen>
 #include <QVBoxLayout>
+#include <QWidget>
 
 NumericInputDialog::NumericInputDialog(const QString &title,
                                        const QString &initialValue,
@@ -21,126 +23,159 @@ NumericInputDialog::NumericInputDialog(const QString &title,
     setWindowTitle(title);
     setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_StyledBackground, true);
-    setFixedSize(430, 430);
+    installEventFilter(this);
+
+    QSize overlaySize(800, 480);
+    if (parent && parent->window()) {
+        overlaySize = parent->window()->size();
+    } else if (QGuiApplication::primaryScreen()) {
+        overlaySize = QGuiApplication::primaryScreen()->availableGeometry().size();
+    }
+    setFixedSize(overlaySize);
 
     setStyleSheet(
         "QDialog {"
+        "  background: #f4f8fc;"
+        "}"
+        "QWidget#KeypadPanel {"
         "  background: #ffffff;"
-        "  border: 3px solid #1266d6;"
+        "  border: 2px solid #d6e2f0;"
         "  border-radius: 22px;"
         "}"
-        "QLabel#Title {"
+        "QLabel#KeypadTitle {"
+        "  color: #102033;"
         "  font-size: 24px;"
         "  font-weight: 900;"
-        "  color: #111827;"
         "}"
-        "QLabel#Hint {"
+        "QLabel#KeypadHint {"
+        "  color: #66758a;"
         "  font-size: 13px;"
         "  font-weight: 600;"
-        "  color: #5b677a;"
         "}"
-        "QLabel#Display {"
-        "  font-size: 34px;"
-        "  font-weight: 900;"
-        "  letter-spacing: 2px;"
-        "  color: #0f172a;"
-        "  background: #f8fafc;"
-        "  border: 2px solid #d6e2f2;"
+        "QLabel#KeypadDisplay {"
+        "  color: #102033;"
+        "  background: #f7fbff;"
+        "  border: 2px solid #c7d9ee;"
         "  border-radius: 14px;"
-        "  padding: 6px 12px;"
-        "  min-height: 48px;"
-        "}"
-        "QPushButton {"
-        "  font-size: 25px;"
+        "  font-size: 30px;"
         "  font-weight: 900;"
-        "  color: #111827;"
-        "  background: #ffffff;"
-        "  border: 2px solid #d7e0ec;"
-        "  border-radius: 13px;"
         "  min-height: 50px;"
+        "  padding: 4px 14px;"
         "}"
-        "QPushButton:pressed {"
-        "  background: #dbeafe;"
-        "  border-color: #1266d6;"
-        "}"
-        "QPushButton#OkButton {"
-        "  font-size: 22px;"
-        "  background: #005de8;"
-        "  color: white;"
-        "  border-color: #004fc4;"
+        "QPushButton#DigitButton {"
+        "  background: #ffffff;"
+        "  border: 2px solid #d9e3ef;"
+        "  border-radius: 14px;"
+        "  color: #111827;"
+        "  font-size: 27px;"
+        "  font-weight: 900;"
         "  min-height: 54px;"
         "}"
-        "QPushButton#OkButton:pressed {"
-        "  background: #004bb8;"
-        "}"
-        "QPushButton#OkButton:disabled {"
-        "  background: #a9c8f7;"
-        "  border-color: #a9c8f7;"
-        "  color: #eff6ff;"
+        "QPushButton#DigitButton:pressed {"
+        "  background: #e5f1ff;"
+        "  border-color: #006dff;"
         "}"
         "QPushButton#CancelButton {"
+        "  background: #fff1f1;"
+        "  border: 2px solid #efb4b4;"
+        "  border-radius: 14px;"
+        "  color: #b3261e;"
         "  font-size: 20px;"
-        "  background: #ef4444;"
-        "  color: white;"
-        "  border-color: #dc2626;"
+        "  font-weight: 900;"
+        "  min-height: 54px;"
         "}"
+        "QPushButton#CancelButton:pressed { background: #ffdede; }"
         "QPushButton#BackspaceButton {"
-        "  font-size: 22px;"
-        "  background: #334155;"
-        "  color: white;"
-        "  border-color: #1e293b;"
+        "  background: #eef3f8;"
+        "  border: 2px solid #bdc9d8;"
+        "  border-radius: 14px;"
+        "  color: #253140;"
+        "  font-size: 24px;"
+        "  font-weight: 900;"
+        "  min-height: 54px;"
         "}"
+        "QPushButton#BackspaceButton:pressed { background: #dce7f2; }"
+        "QPushButton#OkButton {"
+        "  background: #006dff;"
+        "  border: 2px solid #0057cc;"
+        "  border-radius: 14px;"
+        "  color: #ffffff;"
+        "  font-size: 22px;"
+        "  font-weight: 900;"
+        "  min-height: 56px;"
+        "}"
+        "QPushButton#OkButton:pressed { background: #0057cc; }"
     );
 
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(22, 18, 22, 18);
-    mainLayout->setSpacing(9);
+    QVBoxLayout *overlayLayout = new QVBoxLayout(this);
+    overlayLayout->setContentsMargins(0, 0, 0, 0);
+    overlayLayout->setSpacing(0);
+    overlayLayout->addStretch();
 
-    QLabel *titleLabel = new QLabel(title, this);
-    titleLabel->setObjectName("Title");
+    QWidget *panel = new QWidget(this);
+    panel->setObjectName("KeypadPanel");
+    panel->setFixedSize(430, 430);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(panel);
+    mainLayout->setContentsMargins(22, 18, 22, 20);
+    mainLayout->setSpacing(8);
+
+    QLabel *titleLabel = new QLabel(title, panel);
+    titleLabel->setObjectName("KeypadTitle");
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
 
-    QLabel *hintLabel = new QLabel(passwordMode ? "Nhập mật khẩu bằng phím số" : "Nhập số phòng bằng phím số", this);
-    hintLabel->setObjectName("Hint");
-    hintLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(hintLabel);
+    QLabel *hint = new QLabel(passwordMode ? "Nhập mật khẩu bằng số" : "Nhập số phòng cần sử dụng", panel);
+    hint->setObjectName("KeypadHint");
+    hint->setAlignment(Qt::AlignCenter);
+    mainLayout->addWidget(hint);
 
-    m_display = new QLabel(this);
-    m_display->setObjectName("Display");
+    m_display = new QLabel(panel);
+    m_display->setObjectName("KeypadDisplay");
     m_display->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(m_display);
 
     QGridLayout *grid = new QGridLayout();
-    grid->setContentsMargins(0, 4, 0, 0);
-    grid->setHorizontalSpacing(9);
-    grid->setVerticalSpacing(9);
+    grid->setContentsMargins(0, 8, 0, 0);
+    grid->setHorizontalSpacing(8);
+    grid->setVerticalSpacing(8);
 
-    auto addDigit = [this, grid](const QString &text, int row, int col) {
-        QPushButton *button = createButton(text);
+    auto addButton = [this, grid, panel](const QString &text,
+                                         int row,
+                                         int col,
+                                         const QString &objectName) {
+        QPushButton *button = new QPushButton(text, panel);
+        button->setObjectName(objectName);
+        button->setFocusPolicy(Qt::NoFocus);
+        button->setCursor(Qt::PointingHandCursor);
         grid->addWidget(button, row, col);
-        connect(button, &QPushButton::clicked, this, [this, text]() { appendDigit(text); });
+        return button;
     };
 
-    addDigit("1", 0, 0); addDigit("2", 0, 1); addDigit("3", 0, 2);
-    addDigit("4", 1, 0); addDigit("5", 1, 1); addDigit("6", 1, 2);
-    addDigit("7", 2, 0); addDigit("8", 2, 1); addDigit("9", 2, 2);
+    for (int i = 1; i <= 9; ++i) {
+        QPushButton *digit = addButton(QString::number(i), (i - 1) / 3, (i - 1) % 3, "DigitButton");
+        connect(digit, &QPushButton::clicked, this, [this, i]() { appendDigit(QString::number(i)); });
+    }
 
-    QPushButton *cancel = createButton("HỦY", "CancelButton");
+    QPushButton *cancel = addButton("HỦY", 3, 0, "CancelButton");
+    QPushButton *zero = addButton("0", 3, 1, "DigitButton");
+    QPushButton *back = addButton("⌫", 3, 2, "BackspaceButton");
+
     connect(cancel, &QPushButton::clicked, this, &NumericInputDialog::reject);
-    grid->addWidget(cancel, 3, 0);
-
-    addDigit("0", 3, 1);
-
-    QPushButton *backspaceButton = createButton(QString::fromUtf8("⌫"), "BackspaceButton");
-    connect(backspaceButton, &QPushButton::clicked, this, &NumericInputDialog::backspace);
-    grid->addWidget(backspaceButton, 3, 2);
+    connect(zero, &QPushButton::clicked, this, [this]() { appendDigit("0"); });
+    connect(back, &QPushButton::clicked, this, &NumericInputDialog::backspace);
 
     mainLayout->addLayout(grid);
 
-    m_okButton = createButton(QString::fromUtf8("✓ XÁC NHẬN"), "OkButton");
-    connect(m_okButton, &QPushButton::clicked, this, &NumericInputDialog::accept);
-    mainLayout->addWidget(m_okButton);
+    QPushButton *ok = new QPushButton("✓ XÁC NHẬN", panel);
+    ok->setObjectName("OkButton");
+    ok->setFocusPolicy(Qt::NoFocus);
+    ok->setCursor(Qt::PointingHandCursor);
+    connect(ok, &QPushButton::clicked, this, &NumericInputDialog::confirm);
+    mainLayout->addWidget(ok);
+
+    overlayLayout->addWidget(panel, 0, Qt::AlignCenter);
+    overlayLayout->addStretch();
 
     refreshDisplay();
 }
@@ -149,50 +184,28 @@ QString NumericInputDialog::value() const {
     return m_value;
 }
 
-void NumericInputDialog::keyPressEvent(QKeyEvent *event) {
-    if (!event) {
-        return;
-    }
-
-    const int key = event->key();
-    if (key >= Qt::Key_0 && key <= Qt::Key_9) {
-        appendDigit(QString::number(key - Qt::Key_0));
-        return;
-    }
-
-    if (key == Qt::Key_Backspace) {
-        backspace();
-        return;
-    }
-
-    if (key == Qt::Key_Delete) {
-        clearValue();
-        return;
-    }
-
-    if (key == Qt::Key_Return || key == Qt::Key_Enter) {
-        if (!m_value.isEmpty()) {
-            accept();
+bool NumericInputDialog::eventFilter(QObject *watched, QEvent *event) {
+    if (watched == this && event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        const int key = keyEvent->key();
+        if (key >= Qt::Key_0 && key <= Qt::Key_9) {
+            appendDigit(QString::number(key - Qt::Key_0));
+            return true;
         }
-        return;
+        if (key == Qt::Key_Backspace) {
+            backspace();
+            return true;
+        }
+        if (key == Qt::Key_Return || key == Qt::Key_Enter) {
+            confirm();
+            return true;
+        }
+        if (key == Qt::Key_Escape) {
+            reject();
+            return true;
+        }
     }
-
-    if (key == Qt::Key_Escape) {
-        reject();
-        return;
-    }
-
-    QDialog::keyPressEvent(event);
-}
-
-QPushButton *NumericInputDialog::createButton(const QString &text, const QString &objectName) {
-    QPushButton *button = new QPushButton(text, this);
-    button->setCursor(Qt::PointingHandCursor);
-    button->setFocusPolicy(Qt::NoFocus);
-    if (!objectName.isEmpty()) {
-        button->setObjectName(objectName);
-    }
-    return button;
+    return QDialog::eventFilter(watched, event);
 }
 
 void NumericInputDialog::appendDigit(const QString &digit) {
@@ -215,20 +228,19 @@ void NumericInputDialog::clearValue() {
     refreshDisplay();
 }
 
+void NumericInputDialog::confirm() {
+    accept();
+}
+
 void NumericInputDialog::refreshDisplay() {
     if (!m_display) {
         return;
     }
 
     if (m_value.isEmpty()) {
-        m_display->setText("—");
-    } else if (m_passwordMode) {
-        m_display->setText(QString(m_value.length(), QChar(0x2022)));
-    } else {
-        m_display->setText(m_value);
+        m_display->setText(m_passwordMode ? "••••" : "VD: 302");
+        return;
     }
 
-    if (m_okButton) {
-        m_okButton->setEnabled(!m_value.isEmpty());
-    }
+    m_display->setText(m_passwordMode ? QString(m_value.length(), QChar(0x2022)) : m_value);
 }

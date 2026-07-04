@@ -15,7 +15,7 @@ bool RelayHardwareService::initialize()
     }
 
     if (!m_relayDriver.init()) {
-        qWarning() << "Relay driver init failed. UI will continue; start command will report error if relay is unavailable.";
+        qWarning() << "[RelayHardwareService] Relay driver init failed. UI will continue; start operation will retry.";
         return true;
     }
 
@@ -23,7 +23,7 @@ bool RelayHardwareService::initialize()
 
     for (int machineId = 1; machineId <= 4; ++machineId) {
         if (!m_relayDriver.off(toRelayId(machineId))) {
-            qWarning() << "Relay safety OFF failed during init for machine" << machineId;
+            qWarning() << "[RelayHardwareService] Initial relay OFF failed for machine" << machineId;
         }
     }
 
@@ -32,8 +32,16 @@ bool RelayHardwareService::initialize()
 
 bool RelayHardwareService::turnOn(int machineId)
 {
-    if (!m_initialized || !isValidMachineId(machineId)) {
+    if (!isValidMachineId(machineId)) {
         return false;
+    }
+
+    if (!m_initialized) {
+        if (!m_relayDriver.init()) {
+            qWarning() << "[RelayHardwareService] Retry relay init failed on turnOn for machine" << machineId;
+            return false;
+        }
+        m_initialized = true;
     }
 
     return m_relayDriver.on(toRelayId(machineId));
@@ -41,8 +49,16 @@ bool RelayHardwareService::turnOn(int machineId)
 
 bool RelayHardwareService::turnOff(int machineId)
 {
-    if (!m_initialized || !isValidMachineId(machineId)) {
+    if (!isValidMachineId(machineId)) {
         return false;
+    }
+
+    if (!m_initialized) {
+        if (!m_relayDriver.init()) {
+            qWarning() << "[RelayHardwareService] Retry relay init failed on turnOff for machine" << machineId;
+            return false;
+        }
+        m_initialized = true;
     }
 
     return m_relayDriver.off(toRelayId(machineId));
