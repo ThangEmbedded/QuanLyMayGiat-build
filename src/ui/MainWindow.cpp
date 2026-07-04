@@ -1,10 +1,17 @@
 #include "MainWindow.h"
 #include "services/MockHardwareService.h"
+#include "services/MockRelayService.h"
 #include <QFile>
 #include <QMessageBox>
+#include <QTimer>
 #include <memory>
 
 MainWindow::MainWindow(QWidget *parent)
+    : MainWindow(std::make_unique<MockRelayService>(), parent)
+{
+}
+
+MainWindow::MainWindow(std::unique_ptr<IRelayService> relayService, QWidget *parent)
     : QMainWindow(parent) {
 
     setWindowFlags(Qt::FramelessWindowHint);
@@ -15,13 +22,15 @@ MainWindow::MainWindow(QWidget *parent)
         setStyleSheet(styleSheet);
     }
 
-    machineController = new MachineController(std::make_unique<MockHardwareService>(), this);
+    machineController = new MachineController(std::make_unique<MockHardwareService>(),
+                                              std::move(relayService),
+                                              this);
 
     setupUi();
     setupConnections();
     machineController->initialize();
     refreshAllPages();
-    stackedWidget->setCurrentIndex(0);
+    stackedWidget->setCurrentIndex(HomeIndex);
 }
 
 MainWindow::~MainWindow() = default;
@@ -31,18 +40,14 @@ void MainWindow::setupUi() {
     setCentralWidget(stackedWidget);
 
     homePage = new HomePage(this);
-    machineDetailPage = new MachineDetailPage(this);
-    paymentPage = new PaymentPage(this);
-    runningStatusPage = new RunningStatusPage(this);
-    adminLoginPage = new AdminLoginPage(this);
-    adminDashboardPage = new AdminDashboardPage(this);
+    confirmStartPage = new ConfirmStartPage(this);
+    adminAuthPage = new AdminAuthPage(this);
+    adminSetupPage = new AdminDashboardPage(this);
 
-    stackedWidget->addWidget(homePage);            // Index 0
-    stackedWidget->addWidget(machineDetailPage);   // Index 1
-    stackedWidget->addWidget(paymentPage);         // Index 2
-    stackedWidget->addWidget(runningStatusPage);   // Index 3
-    stackedWidget->addWidget(adminLoginPage);      // Index 4
-    stackedWidget->addWidget(adminDashboardPage);  // Index 5
+    stackedWidget->addWidget(homePage);          // 0: Home control máy giặt
+    stackedWidget->addWidget(confirmStartPage);  // 1: Nhập phòng + xác nhận bật máy
+    stackedWidget->addWidget(adminAuthPage);     // 2: Xác thực mật khẩu admin
+    stackedWidget->addWidget(adminSetupPage);    // 3: Admin setup
 }
 
 void MainWindow::setupConnections() {
@@ -51,15 +56,8 @@ void MainWindow::setupConnections() {
         refreshAllPages();
     });
 
-    connect(machineController, &MachineController::machineUpdated,
-            this, [this](const MachineData &machine) {
-        if (stackedWidget->currentWidget() == runningStatusPage && machine.id == m_selectedMachineId) {
-            runningStatusPage->setMachine(machine);
-        }
-    });
-
     connect(machineController, &MachineController::logCreated,
-            adminDashboardPage, &AdminDashboardPage::addLog);
+            adminSetupPage, &AdminDashboardPage::addLog);
 
     connect(machineController, &MachineController::operationFailed,
             this, [this](const QString &message) {
@@ -71,75 +69,74 @@ void MainWindow::setupConnections() {
         if (machine.id == 0) {
             return;
         }
+        if (machine.state != MachineState::Open) {
+            QMessageBox::information(this, "Máy chưa sẵn sàng", "Chỉ có thể chọn máy đang trống.");
+            return;
+        }
 
         m_selectedMachineId = id;
-        if (machine.state == MachineState::Open) {
-            machineDetailPage->setMachine(machine);
-            stackedWidget->setCurrentIndexWithFade(1);
-        } else if (machine.state == MachineState::Running) {
-            runningStatusPage->setMachine(machine);
-            stackedWidget->setCurrentIndexWithFade(3);
-        }
+        confirmStartPage->setMachineAndCycle(machine, "Giặt thường", 45, 0);
+        stackedWidget->setCurrentIndexWithFade(ConfirmStartIndex);
     });
 
     connect(homePage, &HomePage::adminRequested, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(4);
+        adminAuthPage->reset();
+        stackedWidget->setCurrentIndexWithFade(AdminAuthIndex);
     });
 
-    connect(machineDetailPage, &MachineDetailPage::backRequested, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(0);
+    connect(adminAuthPage, &AdminAuthPage::backRequested,
+            this, &MainWindow::goHome);
+
+    connect(adminAuthPage, &AdminAuthPage::authSucceeded, this, [this]() {
+        stackedWidget->setCurrentIndexWithFade(AdminSetupIndex);
     });
 
-    connect(machineDetailPage, &MachineDetailPage::paymentRequested, this, [this](int id) {
-        paymentPage->setMachine(id,
-                                machineDetailPage->getSelectedCycle(),
-                                machineDetailPage->getSelectedPrice());
-        stackedWidget->setCurrentIndexWithFade(2);
+    connect(adminAuthPage, &AdminAuthPage::authFailed, this, [this]() {
+        QMessageBox *box = new QMessageBox(this);
+        box->setIcon(QMessageBox::Warning);
+        box->setWindowTitle("Sai mật khẩu");
+        box->setText("Sai mật khẩu. Tự động quay về Home sau 5 giây.");
+        box->setStandardButtons(QMessageBox::NoButton);
+
+        QTimer::singleShot(5000, box, [this, box]() {
+            box->close();
+            box->deleteLater();
+            goHome();
+        });
+
+        box->show();
     });
 
-    connect(paymentPage, &PaymentPage::backRequested, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(1);
-    });
+    connect(confirmStartPage, &ConfirmStartPage::backRequested,
+            this, &MainWindow::goHome);
 
-    connect(paymentPage, &PaymentPage::paymentConfirmed, this,
-            [this](int machineId, const QString &room) {
+    connect(confirmStartPage, &ConfirmStartPage::startConfirmed,
+            this, [this](int machineId, const QString &room) {
         WashCycle cycle;
-        cycle.name = machineDetailPage->getSelectedCycle();
-        cycle.priceVnd = machineDetailPage->getSelectedPrice();
-        cycle.durationMinutes = machineDetailPage->getSelectedDuration();
+        cycle.name = "Giặt thường";
+        cycle.priceVnd = 0;
+        cycle.durationMinutes = 45;
 
         if (machineController->startMachine(machineId, cycle, room)) {
-            const MachineData machine = machineController->machineById(machineId);
-            runningStatusPage->setMachine(machine);
-            m_selectedMachineId = machineId;
-            stackedWidget->setCurrentIndexWithFade(3);
+            goHome();
         }
     });
 
-    connect(runningStatusPage, &RunningStatusPage::backRequested, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(0);
-    });
+    connect(adminSetupPage, &AdminDashboardPage::backRequested,
+            this, &MainWindow::goHome);
 
-    connect(adminLoginPage, &AdminLoginPage::backRequested, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(0);
-    });
-
-    connect(adminLoginPage, &AdminLoginPage::loginSuccess, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(5);
-    });
-
-    connect(adminDashboardPage, &AdminDashboardPage::backRequested, this, [this]() {
-        stackedWidget->setCurrentIndexWithFade(0);
-    });
-
-    connect(adminDashboardPage, &AdminDashboardPage::toggleMachineState,
+    connect(adminSetupPage, &AdminDashboardPage::toggleMachineState,
             machineController, &MachineController::toggleMachineOnlineState);
 
-    connect(adminDashboardPage, &AdminDashboardPage::resetMachineState,
+    connect(adminSetupPage, &AdminDashboardPage::resetMachineState,
             machineController, &MachineController::resetMachine);
 }
 
 void MainWindow::refreshAllPages() {
     homePage->updateMachines(machineController->machines());
-    adminDashboardPage->updateMachines(machineController->machines());
+    adminSetupPage->updateMachines(machineController->machines());
+}
+
+void MainWindow::goHome() {
+    stackedWidget->setCurrentIndexWithFade(HomeIndex);
 }

@@ -2,9 +2,11 @@
 #include <QTime>
 
 MachineController::MachineController(std::unique_ptr<IHardwareService> hardwareService,
+                                     std::unique_ptr<IRelayService> relayService,
                                      QObject *parent)
     : QObject(parent),
-      m_hardwareService(std::move(hardwareService)) {
+      m_hardwareService(std::move(hardwareService)),
+      m_relayService(std::move(relayService)) {
     initializeMockMachines();
 
     m_minuteTimer.setInterval(60 * 1000);
@@ -26,9 +28,14 @@ bool MachineController::initialize() {
         return false;
     }
 
+    if (!m_relayService || !m_relayService->initialize()) {
+        emit operationFailed("Không thể khởi tạo relay service.");
+        return false;
+    }
+
     m_minuteTimer.start();
     emit machinesChanged(m_machines);
-    emit logCreated("Hệ thống UI khởi động với MockHardwareService.");
+    emit logCreated("Hệ thống UI khởi động với MockHardwareService + MockRelayService.");
     return true;
 }
 
@@ -44,7 +51,13 @@ bool MachineController::startMachine(int machineId, const WashCycle &cycle, cons
         return false;
     }
 
+    if (!m_relayService->turnOn(machineId)) {
+        emit operationFailed(QString("Relay máy %1 bật thất bại.").arg(machineId));
+        return false;
+    }
+
     if (!m_hardwareService->startMachine(machineId)) {
+        m_relayService->turnOff(machineId);
         emit operationFailed(QString("Không thể khởi động máy %1.").arg(machineId));
         return false;
     }
@@ -59,6 +72,7 @@ bool MachineController::startMachine(int machineId, const WashCycle &cycle, cons
     machine->cycle = cycle.name;
     machine->start = start.toString("HH:mm");
     machine->end = end.toString("HH:mm");
+    machine->finishedHoldMinutes = 0;
 
     emit logCreated(QString("%1 - %2 nhận %3 (%4)")
                     .arg(start.toString("HH:mm"))
@@ -77,10 +91,14 @@ bool MachineController::setMachineOffline(int machineId) {
 
     m_hardwareService->setMachineEnabled(machineId, false);
     m_hardwareService->stopMachine(machineId);
+    if (m_relayService) {
+        m_relayService->turnOff(machineId);
+    }
 
     machine->state = MachineState::Offline;
     machine->claimer.clear();
     machine->remaining = 0;
+    machine->finishedHoldMinutes = 0;
     machine->cycle.clear();
     machine->start.clear();
     machine->end.clear();
@@ -102,6 +120,7 @@ bool MachineController::setMachineOnline(int machineId) {
     machine->state = MachineState::Open;
     machine->claimer.clear();
     machine->remaining = 0;
+    machine->finishedHoldMinutes = 0;
     machine->cycle.clear();
     machine->start.clear();
     machine->end.clear();
@@ -132,9 +151,13 @@ bool MachineController::resetMachine(int machineId) {
     }
 
     m_hardwareService->stopMachine(machineId);
+    if (m_relayService) {
+        m_relayService->turnOff(machineId);
+    }
     machine->state = MachineState::Open;
     machine->claimer.clear();
     machine->remaining = 0;
+    machine->finishedHoldMinutes = 0;
     machine->cycle.clear();
     machine->start.clear();
     machine->end.clear();
@@ -155,12 +178,32 @@ void MachineController::onMinuteTick() {
 
             if (machine.remaining == 0) {
                 m_hardwareService->stopMachine(machine.id);
+                if (m_relayService) {
+                    m_relayService->turnOff(machine.id);
+                }
+                machine.state = MachineState::Finished;
+                machine.finishedHoldMinutes = 2;
+                emit logCreated(QString("%1 - %2 hoàn thành chu kỳ, chuyển sang trạng thái Đã giặt xong")
+                                .arg(QTime::currentTime().toString("HH:mm"))
+                                .arg(machine.name));
+            }
+            emit machineUpdated(machine);
+        }
+        else if (machine.state == MachineState::Finished) {
+            if (machine.finishedHoldMinutes > 0) {
+                machine.finishedHoldMinutes--;
+                changed = true;
+            }
+
+            if (machine.finishedHoldMinutes <= 0) {
                 machine.state = MachineState::Open;
                 machine.claimer.clear();
                 machine.cycle.clear();
                 machine.start.clear();
                 machine.end.clear();
-                emit logCreated(QString("%1 - %2 hoàn thành chu kỳ")
+                machine.finishedHoldMinutes = 0;
+                changed = true;
+                emit logCreated(QString("%1 - %2 tự động về trạng thái Trống")
                                 .arg(QTime::currentTime().toString("HH:mm"))
                                 .arg(machine.name));
             }

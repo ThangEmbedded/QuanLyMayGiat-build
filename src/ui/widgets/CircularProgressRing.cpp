@@ -4,7 +4,7 @@
 #include <QVector>
 
 CircularProgressRing::CircularProgressRing(QWidget *parent)
-    : QWidget(parent), m_progress(0.0), m_color(QColor("#006c49")), m_iconColor(QColor("#8e9994")), m_dashed(false), m_lineWidth(8), m_showText(false) {
+    : QWidget(parent), m_progress(0.0), m_color(QColor("#006c49")), m_iconColor(QColor("#8e9994")), m_dashed(false), m_lineWidth(8), m_showText(false), m_statusMode(false), m_activeVisible(true) {
 }
 
 void CircularProgressRing::setProgress(double progress) {
@@ -28,20 +28,24 @@ void CircularProgressRing::paintEvent(QPaintEvent *event) {
     painter.setPen(trackPen);
     painter.drawEllipse(rect);
 
-    // 2. Draw active progress ring
-    if (m_dashed) {
-        // Dashed ring for Open state
-        QPen activePen(m_color, m_lineWidth, Qt::CustomDashLine, Qt::RoundCap, Qt::RoundJoin);
+    // 2. Draw active/status ring
+    QColor activeColor = m_activeVisible ? m_color : QColor("#eef0f1");
+    if (m_statusMode) {
+        // Status mode: full ring color represents machine state.
+        QPen activePen(activeColor, m_lineWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        painter.setPen(activePen);
+        painter.drawEllipse(rect);
+    } else if (m_dashed) {
+        QPen activePen(activeColor, m_lineWidth, Qt::CustomDashLine, Qt::RoundCap, Qt::RoundJoin);
         QVector<qreal> dashes;
-        dashes << 2.0 << 6.0; // small dots/dashes
+        dashes << 2.0 << 6.0;
         activePen.setDashPattern(dashes);
         painter.setPen(activePen);
         painter.drawEllipse(rect);
     } else if (m_progress > 0.0) {
-        // Solid arc for progress
-        QPen activePen(m_color, m_lineWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        QPen activePen(activeColor, m_lineWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         painter.setPen(activePen);
-        int startAngle = 90 * 16; // 12 o'clock
+        int startAngle = 90 * 16;
         int spanAngle = -static_cast<int>(m_progress * 360 * 16);
         painter.drawArc(rect, startAngle, spanAngle);
     }

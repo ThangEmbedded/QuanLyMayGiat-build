@@ -13,7 +13,7 @@ MachineDetailPage::MachineDetailPage(QWidget *parent)
     // 1. Header
     m_header = new HeaderWidget(this);
     m_header->setHeaderStyle(HeaderWidget::SubPageStyle);
-    m_header->setTitle("Chi tiết máy & Chọn chương trình");
+    m_header->setTitle("Điều khiển máy giặt");
     mainLayout->addWidget(m_header);
 
     // 2. Content
@@ -57,7 +57,7 @@ MachineDetailPage::MachineDetailPage(QWidget *parent)
 
     addSummaryRow("Chương trình đã chọn:", m_cycleLabel);
     addSummaryRow("Thời gian giặt:", m_durationLabel);
-    addSummaryRow("Chi phí thanh toán:", m_priceLabel);
+    addSummaryRow("Chi phí demo:", m_priceLabel);
 
     leftLayout->addStretch();
     contentLayout->addWidget(leftPanel);
@@ -87,7 +87,7 @@ MachineDetailPage::MachineDetailPage(QWidget *parent)
 
     // Bottom Action Row
     QHBoxLayout *actionLayout = new QHBoxLayout();
-    m_payButton = new QPushButton("Tiến hành thanh toán", rightPanel);
+    m_payButton = new QPushButton("Tiếp tục xác nhận bật máy", rightPanel);
     m_payButton->setObjectName("PrimaryButton");
     m_payButton->setFixedHeight(48);
     m_payButton->setFixedWidth(200);
@@ -154,7 +154,7 @@ void MachineDetailPage::setupCycleButton(QPushButton *btn, const QString &title,
 void MachineDetailPage::setMachine(const MachineData &machine) {
     m_machineId = machine.id;
     m_machineTitleLabel->setText(QString("MÁY %1").arg(machine.id));
-    m_header->setTitle(QString("Nhận Máy %1").arg(machine.id));
+    m_header->setTitle(QString("Điều khiển Máy %1").arg(machine.id));
     
     m_cycleLabel->setText(m_selectedCycle);
     m_durationLabel->setText(QString("%1 phút").arg(m_selectedDuration));

@@ -14,6 +14,7 @@ struct MachineData {
     QString cycle;
     QString start;
     QString end;
+    int finishedHoldMinutes = 0;
 };
 
 #endif // MACHINEDATA_H

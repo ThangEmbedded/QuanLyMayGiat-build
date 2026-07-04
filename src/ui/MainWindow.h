@@ -4,30 +4,36 @@
 #include <QMainWindow>
 #include "widgets/TransitionStackedWidget.h"
 #include "pages/HomePage.h"
-#include "pages/MachineDetailPage.h"
-#include "pages/PaymentPage.h"
-#include "pages/RunningStatusPage.h"
-#include "pages/AdminLoginPage.h"
+#include "pages/ConfirmStartPage.h"
+#include "pages/AdminAuthPage.h"
 #include "pages/AdminDashboardPage.h"
 #include "controllers/MachineController.h"
+#include "services/IRelayService.h"
+#include <memory>
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(std::unique_ptr<IRelayService> relayService, QWidget *parent = nullptr);
     ~MainWindow();
 
 private:
+    enum PageIndex {
+        HomeIndex = 0,
+        ConfirmStartIndex = 1,
+        AdminAuthIndex = 2,
+        AdminSetupIndex = 3
+    };
+
     TransitionStackedWidget *stackedWidget = nullptr;
 
     HomePage *homePage = nullptr;
-    MachineDetailPage *machineDetailPage = nullptr;
-    PaymentPage *paymentPage = nullptr;
-    RunningStatusPage *runningStatusPage = nullptr;
-    AdminLoginPage *adminLoginPage = nullptr;
-    AdminDashboardPage *adminDashboardPage = nullptr;
+    ConfirmStartPage *confirmStartPage = nullptr;
+    AdminAuthPage *adminAuthPage = nullptr;
+    AdminDashboardPage *adminSetupPage = nullptr;
 
     MachineController *machineController = nullptr;
     int m_selectedMachineId = 0;
@@ -35,6 +41,7 @@ private:
     void setupUi();
     void setupConnections();
     void refreshAllPages();
+    void goHome();
 };
 
 #endif // MAINWINDOW_H

@@ -6,6 +6,7 @@
 enum class MachineState {
     Open,
     Running,
+    Finished,
     Offline,
     Error
 };
@@ -14,6 +15,7 @@ inline QString machineStateToString(MachineState state) {
     switch (state) {
     case MachineState::Open:    return "open";
     case MachineState::Running: return "running";
+    case MachineState::Finished: return "finished";
     case MachineState::Offline: return "offline";
     case MachineState::Error:   return "error";
     }
@@ -23,7 +25,8 @@ inline QString machineStateToString(MachineState state) {
 inline QString machineStateDisplayText(MachineState state) {
     switch (state) {
     case MachineState::Open:    return "Còn trống";
-    case MachineState::Running: return "Đang chạy";
+    case MachineState::Running: return "Đang giặt";
+    case MachineState::Finished: return "Đã giặt xong";
     case MachineState::Offline: return "Ngoại tuyến";
     case MachineState::Error:   return "Lỗi";
     }

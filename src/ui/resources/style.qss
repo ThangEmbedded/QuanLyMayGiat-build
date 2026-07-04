@@ -230,3 +230,12 @@ QLabel#DetailValue {
     font-weight: 700;
     color: #191c1d;
 }
+
+QWidget#MachineCard[mState="finished"] {
+    background-color: #fff8e1;
+    border: 1.5px solid #f4b400;
+}
+
+#CardState[mState="finished"] {
+    color: #a06400;
+}

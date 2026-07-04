@@ -18,6 +18,8 @@ public:
     void setDashed(bool dashed) { m_dashed = dashed; update(); }
     void setLineWidth(int width) { m_lineWidth = width; update(); }
     void setIconColor(const QColor &color) { m_iconColor = color; update(); }
+    void setStatusMode(bool enabled) { m_statusMode = enabled; update(); }
+    void setActiveVisible(bool visible) { m_activeVisible = visible; update(); }
     void setCenterText(bool show, const QString &top = "", const QString &bottom = "") {
         m_showText = show;
         m_centerTopText = top;
@@ -35,6 +37,8 @@ private:
     bool m_dashed;
     int m_lineWidth;
     bool m_showText;
+    bool m_statusMode;
+    bool m_activeVisible;
     QString m_centerTopText;
     QString m_centerBottomText;
 };

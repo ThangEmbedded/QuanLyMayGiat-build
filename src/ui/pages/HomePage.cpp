@@ -1,41 +1,73 @@
 #include "HomePage.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QSizePolicy>
 
 HomePage::HomePage(QWidget *parent)
     : QWidget(parent) {
-    
+
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 1. Header
     m_header = new HeaderWidget(this);
     m_header->setHeaderStyle(HeaderWidget::OverviewStyle);
-    m_header->setTitle("Chọn máy còn trống");
-    m_header->setSubtitle("Trạm giặt · Tầng 3");
+    m_header->setTitle("Home control máy giặt");
+    m_header->setSubtitle("Demo 1 · Mock UI");
     m_header->setBadgeText("0 máy trống");
     mainLayout->addWidget(m_header);
 
     connect(m_header, &HeaderWidget::backClicked, this, &HomePage::adminRequested);
 
-    // 2. Content Area (Grid of machine cards)
     QWidget *contentWidget = new QWidget(this);
     contentWidget->setObjectName("HomeContent");
     contentWidget->setStyleSheet("QWidget#HomeContent { background-color: #f8f9fa; }");
 
-    QHBoxLayout *gridLayout = new QHBoxLayout(contentWidget);
-    gridLayout->setContentsMargins(24, 20, 24, 20);
+    QVBoxLayout *contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(24, 20, 24, 20);
+    contentLayout->setSpacing(14);
+
+    QHBoxLayout *topRow = new QHBoxLayout();
+    QLabel *hint = new QLabel("Chọn máy đang trống để nhập phòng và xác nhận khởi động.", contentWidget);
+    hint->setStyleSheet("font-size: 14px; color: #5f6f66; font-weight: 600;");
+    m_adminButton = new QPushButton("Admin setup", contentWidget);
+    // Touch target for Raspberry Pi kiosk: make the real clickable area large enough.
+    m_adminButton->setMinimumSize(220, 64);
+    m_adminButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    m_adminButton->setCursor(Qt::PointingHandCursor);
+    m_adminButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #0051ca;"
+        "  color: white;"
+        "  border: none;"
+        "  border-radius: 18px;"
+        "  font-size: 20px;"
+        "  font-weight: 800;"
+        "  padding: 10px 22px;"
+        "}"
+        "QPushButton:pressed { background-color: #003f9e; }"
+    );
+    topRow->addWidget(hint, 1);
+    topRow->addSpacing(12);
+    topRow->addWidget(m_adminButton, 0, Qt::AlignRight | Qt::AlignVCenter);
+    contentLayout->addLayout(topRow);
+
+    connect(m_adminButton, &QPushButton::clicked, this, &HomePage::adminRequested);
+
+    QHBoxLayout *gridLayout = new QHBoxLayout();
+    gridLayout->setContentsMargins(0, 0, 0, 0);
     gridLayout->setSpacing(16);
 
     for (int id = 1; id <= 4; id++) {
-        MachineCardWidget *card = new MachineCardWidget(id, this);
+        MachineCardWidget *card = new MachineCardWidget(id, contentWidget);
         gridLayout->addWidget(card);
         m_cards.append(card);
 
         connect(card, &MachineCardWidget::clicked, this, &HomePage::machineSelected);
     }
 
+    contentLayout->addLayout(gridLayout, 1);
     mainLayout->addWidget(contentWidget);
 }
 

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QPushButton>
+#include <QTimer>
 #include "CircularProgressRing.h"
 
 class MachineCardWidget : public QWidget {
@@ -22,14 +23,32 @@ signals:
 protected:
     void mousePressEvent(QMouseEvent *event) override;
 
+private slots:
+    void runningPulseOff();
+    void runningPulseOn();
+    void finishedBlinkStep();
+    void finishedHoldDone();
+
 private:
+    void applyStatusAnimation(const QString &state);
+    void stopStatusAnimation();
+    void startRunningAnimation();
+    void startFinishedBlinkCycle();
+
     int m_id;
     QString m_state;
+    QString m_visualState;
     QLabel *m_nameLabel;
     CircularProgressRing *m_progressRing;
     QLabel *m_statusLabel;
     QLabel *m_claimerLabel;
     QPushButton *m_claimButton;
+
+    QTimer m_runningPulseTimer;
+    QTimer m_runningRestoreTimer;
+    QTimer m_finishedBlinkTimer;
+    QTimer m_finishedHoldTimer;
+    int m_finishedBlinkStep = 0;
 };
 
 #endif // MACHINECARDWIDGET_H

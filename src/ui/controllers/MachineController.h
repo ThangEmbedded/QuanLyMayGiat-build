@@ -8,12 +8,14 @@
 #include "models/MachineData.h"
 #include "models/WashCycle.h"
 #include "services/IHardwareService.h"
+#include "services/IRelayService.h"
 
 class MachineController : public QObject {
     Q_OBJECT
 
 public:
     explicit MachineController(std::unique_ptr<IHardwareService> hardwareService,
+                               std::unique_ptr<IRelayService> relayService,
                                QObject *parent = nullptr);
 
     const QList<MachineData>& machines() const;
@@ -38,6 +40,7 @@ private slots:
 private:
     QList<MachineData> m_machines;
     std::unique_ptr<IHardwareService> m_hardwareService;
+    std::unique_ptr<IRelayService> m_relayService;
     QTimer m_minuteTimer;
 
     void initializeMockMachines();

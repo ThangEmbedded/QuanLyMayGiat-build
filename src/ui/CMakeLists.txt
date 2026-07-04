@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(LaundryKioskUi LANGUAGES CXX)
+project(LaundryKioskDemo2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +10,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-add_executable(laundry_kiosk_ui
+add_executable(laundry_kiosk_demo_2
     main.cpp
     MainWindow.cpp
     MainWindow.h
@@ -26,19 +26,20 @@ add_executable(laundry_kiosk_ui
     services/IHardwareService.h
     services/MockHardwareService.cpp
     services/MockHardwareService.h
+    services/IRelayService.h
+    services/MockRelayService.cpp
+    services/MockRelayService.h
 
     pages/AdminDashboardPage.cpp
     pages/AdminDashboardPage.h
-    pages/AdminLoginPage.cpp
-    pages/AdminLoginPage.h
+    pages/AdminAuthPage.cpp
+    pages/AdminAuthPage.h
     pages/HomePage.cpp
     pages/HomePage.h
     pages/MachineDetailPage.cpp
     pages/MachineDetailPage.h
-    pages/PaymentPage.cpp
-    pages/PaymentPage.h
-    pages/RunningStatusPage.cpp
-    pages/RunningStatusPage.h
+    pages/ConfirmStartPage.cpp
+    pages/ConfirmStartPage.h
 
     widgets/CircularProgressRing.cpp
     widgets/CircularProgressRing.h
@@ -46,11 +47,11 @@ add_executable(laundry_kiosk_ui
     widgets/HeaderWidget.h
     widgets/MachineCardWidget.cpp
     widgets/MachineCardWidget.h
-    widgets/QRWidget.cpp
-    widgets/QRWidget.h
     widgets/TransitionStackedWidget.cpp
     widgets/TransitionStackedWidget.h
+    widgets/NumericInputDialog.cpp
+    widgets/NumericInputDialog.h
 )
 
-target_include_directories(laundry_kiosk_ui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(laundry_kiosk_ui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_include_directories(laundry_kiosk_demo_2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(laundry_kiosk_demo_2 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)

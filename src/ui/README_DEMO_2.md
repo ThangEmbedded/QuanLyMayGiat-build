@@ -1,4 +1,4 @@
-# demo_3
+# demo_2
 
 Demo 2 kế thừa demo_1 và bổ sung:
 
@@ -20,5 +20,5 @@ mkdir -p build
 cd build
 cmake ..
 make -j4
-./laundry_kiosk_demo_3 -platform linuxfb
+./laundry_kiosk_demo_2 -platform linuxfb
 ```

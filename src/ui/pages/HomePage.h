@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QList>
+#include <QPushButton>
 #include "widgets/HeaderWidget.h"
 #include "widgets/MachineCardWidget.h"
 #include "models/MachineData.h"
@@ -19,7 +20,8 @@ signals:
     void adminRequested();
 
 private:
-    HeaderWidget *m_header;
+    HeaderWidget *m_header = nullptr;
+    QPushButton *m_adminButton = nullptr;
     QList<MachineCardWidget*> m_cards;
 };
 
