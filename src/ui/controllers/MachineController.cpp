@@ -28,14 +28,21 @@ bool MachineController::initialize() {
         return false;
     }
 
-    if (!m_relayService || !m_relayService->initialize()) {
-        emit operationFailed("Không thể khởi tạo relay service.");
+    if (!m_relayService) {
+        emit operationFailed("Không tìm thấy relay service.");
         return false;
+    }
+
+    if (!m_relayService->initialize()) {
+        // Do not block the kiosk UI here. On Raspberry Pi the relay driver can still
+        // work after boot even if the initial safety OFF/check is not fully ready.
+        // Actual start/stop operations below still validate turnOn/turnOff results.
+        emit logCreated("Cảnh báo: relay service init chưa sẵn sàng, UI vẫn tiếp tục chạy.");
     }
 
     m_minuteTimer.start();
     emit machinesChanged(m_machines);
-    emit logCreated("Hệ thống UI khởi động với MockHardwareService + MockRelayService.");
+    emit logCreated("Hệ thống UI khởi động.");
     return true;
 }
 
