@@ -1,0 +1,232 @@
+/* Global Stylesheet for Laundry Kiosk */
+
+/* General Window Background */
+QMainWindow {
+    background-color: #f8f9fa;
+}
+
+QWidget {
+    font-family: "Inter", sans-serif;
+    color: #191c1d;
+}
+
+/* Header styles */
+#HeaderTitle {
+    font-family: "Manrope", sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+#HeaderSub {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#HeaderTime {
+    font-family: "Manrope", sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+#HeaderBadge {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 4px 12px;
+}
+
+/* Machine Card Styling based on state */
+QWidget#MachineCard {
+    border-radius: 18px;
+    background-color: #ffffff;
+    border: 1px solid rgba(25, 28, 29, 0.08);
+}
+
+QWidget#MachineCard[mState="open"] {
+    background-color: #f3fdf8;
+    border: 1.5px solid #34d399;
+}
+
+QWidget#MachineCard[mState="running"] {
+    background-color: #ffffff;
+    border: 1px solid rgba(25, 28, 29, 0.08);
+}
+
+QWidget#MachineCard[mState="offline"] {
+    background-color: #f5f6f7;
+    border: 1.5px dashed #d3d8d9;
+}
+
+#CardTitle {
+    font-family: "Manrope", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #8e9994;
+}
+
+#CardState {
+    font-family: "Manrope", sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+#CardState[mState="open"] {
+    color: #006c49;
+}
+
+#CardState[mState="running"] {
+    color: #0051ca;
+}
+
+#CardState[mState="offline"] {
+    color: #6b7670;
+}
+
+#CardDetail {
+    font-size: 12px;
+    font-weight: 700;
+    color: #191c1d;
+}
+
+/* Buttons */
+QPushButton {
+    font-family: "Inter", sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    border-radius: 12px;
+    padding: 10px 18px;
+    border: 1px solid #bbcabf;
+    background-color: #ffffff;
+    color: #191c1d;
+}
+
+QPushButton:pressed {
+    background-color: #f3f4f5;
+}
+
+/* Primary Button (Green Gradient style in QSS) */
+QPushButton#PrimaryButton {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #10b981, stop:1 #006c49);
+    color: #ffffff;
+    border: none;
+}
+
+QPushButton#PrimaryButton:pressed {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0fbf85, stop:1 #005f40);
+}
+
+QPushButton#PrimaryButton:disabled {
+    background-color: #f3f4f5;
+    color: #8e9994;
+    border: 1px solid #bbcabf;
+}
+
+/* Pill Soft Buttons */
+QPushButton#PillSoftButton {
+    background-color: #e8faed;
+    color: #006c49;
+    border: none;
+    border-radius: 18px;
+    padding: 10px 20px;
+    font-size: 13px;
+}
+
+QPushButton#PillSoftButton:pressed {
+    background-color: #d1fae5;
+}
+
+QPushButton#PillSecondaryButton {
+    background-color: #f3f4f5;
+    color: #3c4a42;
+    border: none;
+    border-radius: 18px;
+    padding: 10px 20px;
+    font-size: 13px;
+}
+
+QPushButton#PillSecondaryButton:pressed {
+    background-color: #e7e8e9;
+}
+
+/* Numpad Keypad Button */
+QPushButton#KeyButton {
+    background-color: #ffffff;
+    color: #191c1d;
+    font-family: "Manrope", sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    border-radius: 10px;
+    border: 1px solid #bbcabf;
+}
+
+QPushButton#KeyButton:pressed {
+    background-color: #f3f4f5;
+}
+
+QPushButton#KeyButtonSpecial {
+    background-color: #f3f4f5;
+    color: #8e9994;
+    font-family: "Manrope", sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    border-radius: 10px;
+    border: 1px solid #bbcabf;
+}
+
+QPushButton#KeyButtonSpecial:pressed {
+    background-color: #e7e8e9;
+}
+
+/* Input Display Field */
+QLineEdit#RoomInputDisplay {
+    background-color: #f0f4f8;
+    border: 1px solid #bbcabf;
+    border-radius: 10px;
+    font-family: "Manrope", sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #191c1d;
+    qproperty-alignment: AlignCenter;
+}
+
+/* Back Button */
+QPushButton#BackButton {
+    background-color: transparent;
+    border: none;
+    color: #191c1d;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 4px;
+}
+
+/* Text styles */
+QLabel#SectionTitle {
+    font-family: "Manrope", sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #8e9994;
+}
+
+QLabel#PageTitle {
+    font-family: "Manrope", sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #191c1d;
+}
+
+QLabel#DetailLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8e9994;
+}
+
+QLabel#DetailValue {
+    font-size: 15px;
+    font-weight: 700;
+    color: #191c1d;
+}

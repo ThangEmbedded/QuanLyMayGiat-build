@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.16)
+project(LaundryKioskUi LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+add_executable(laundry_kiosk_ui
+    main.cpp
+    MainWindow.cpp
+    MainWindow.h
+    resources.qrc
+
+    models/MachineData.h
+    models/MachineState.h
+    models/WashCycle.h
+
+    controllers/MachineController.cpp
+    controllers/MachineController.h
+
+    services/IHardwareService.h
+    services/MockHardwareService.cpp
+    services/MockHardwareService.h
+
+    pages/AdminDashboardPage.cpp
+    pages/AdminDashboardPage.h
+    pages/AdminLoginPage.cpp
+    pages/AdminLoginPage.h
+    pages/HomePage.cpp
+    pages/HomePage.h
+    pages/MachineDetailPage.cpp
+    pages/MachineDetailPage.h
+    pages/PaymentPage.cpp
+    pages/PaymentPage.h
+    pages/RunningStatusPage.cpp
+    pages/RunningStatusPage.h
+
+    widgets/CircularProgressRing.cpp
+    widgets/CircularProgressRing.h
+    widgets/HeaderWidget.cpp
+    widgets/HeaderWidget.h
+    widgets/MachineCardWidget.cpp
+    widgets/MachineCardWidget.h
+    widgets/QRWidget.cpp
+    widgets/QRWidget.h
+    widgets/TransitionStackedWidget.cpp
+    widgets/TransitionStackedWidget.h
+)
+
+target_include_directories(laundry_kiosk_ui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(laundry_kiosk_ui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
