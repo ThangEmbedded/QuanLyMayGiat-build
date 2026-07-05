@@ -28,6 +28,10 @@ add_executable(laundry_kiosk
     services/MockRelayService.h
     services/RelayHardwareService.cpp
     services/RelayHardwareService.h
+    services/ICurrentSensorService.h
+    services/MockCurrentSensorService.h
+    services/Ads1115CurrentSensorService.cpp
+    services/Ads1115CurrentSensorService.h
 
     pages/AdminDashboardPage.cpp
     pages/AdminDashboardPage.h
@@ -60,4 +64,6 @@ target_include_directories(laundry_kiosk PRIVATE
 target_link_libraries(laundry_kiosk PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     relay_driver
+    i2c_driver
+    ads1115_driver
 )

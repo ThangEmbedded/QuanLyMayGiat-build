@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "services/MockHardwareService.h"
 #include "services/MockRelayService.h"
+#include "services/Ads1115CurrentSensorService.h"
 #include <QFile>
 #include <QTimer>
 #include <memory>
@@ -23,6 +24,7 @@ MainWindow::MainWindow(std::unique_ptr<IRelayService> relayService, QWidget *par
 
     machineController = new MachineController(std::make_unique<MockHardwareService>(),
                                               std::move(relayService),
+                                              std::make_unique<Ads1115CurrentSensorService>(),
                                               this);
 
     setupUi();
