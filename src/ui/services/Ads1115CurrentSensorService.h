@@ -6,39 +6,52 @@
 #include "drivers/ads1115/ads1115.hpp"
 
 #include <array>
+#include <cstdint>
 #include <memory>
 
 class Ads1115CurrentSensorService : public ICurrentSensorService {
 public:
-    struct MachineAdcConfig {
-        ADS1115::InputMode mode{ADS1115::InputMode::SingleEnded};
-        int channel{0};
-        ADS1115::DifferentialPair differentialPair{ADS1115::DifferentialPair::Ain0Ain1};
-        double activeVoltageThreshold{0.08};
-        int debounceRequiredCount{3};
-    };
-
-    Ads1115CurrentSensorService();
-    explicit Ads1115CurrentSensorService(double activeVoltageThreshold);
-    explicit Ads1115CurrentSensorService(const std::array<MachineAdcConfig, 4> &machineConfigs);
+    // activeSignalThreshold is voltage delta threshold after zero-baseline calibration.
+    // Hardware mapping: each machine has its own ADS1115, and all machines use AIN0.
+    explicit Ads1115CurrentSensorService(double activeSignalThreshold = 0.12);
     ~Ads1115CurrentSensorService() override;
 
     bool initialize() override;
     bool hasCurrent(int machineId) override;
     double lastVoltage(int machineId) const override;
-    CurrentReading readMachineCurrentState(int machineId) override;
 
 private:
-    LinuxI2c m_i2c;
-    std::unique_ptr<ADS1115> m_ads1115;
-    bool m_initialized{false};
-    std::array<MachineAdcConfig, 4> m_configs{};
-    std::array<double, 4> m_lastVoltages{{0.0, 0.0, 0.0, 0.0}};
-    std::array<int, 4> m_lastRaw{{0, 0, 0, 0}};
-    std::array<int, 4> m_activeSampleCounts{{0, 0, 0, 0}};
+    struct SensorBinding {
+        int machineId;
+        uint8_t address;
+        int channel;
+    };
 
-    static std::array<MachineAdcConfig, 4> defaultConfigs(double threshold = 0.08);
+    static constexpr int kMachineCount = 4;
+    static constexpr int kSamplesPerRead = 8;
+    static constexpr int kCalibrationSamples = 16;
+
+    static constexpr std::array<SensorBinding, kMachineCount> kBindings{{
+        {1, 0x48, 0}, // U6: ADDR -> GND, machine 1, AIN0
+        {2, 0x49, 0}, // U3: ADDR -> VDD, machine 2, AIN0
+        {3, 0x4A, 0}, // U4: ADDR -> SDA, machine 3, AIN0
+        {4, 0x4B, 0}, // U5: ADDR -> SCL, machine 4, AIN0
+    }};
+
+    LinuxI2c m_i2c;
+    std::array<std::unique_ptr<ADS1115>, kMachineCount> m_ads{};
+    std::array<bool, kMachineCount> m_adsReady{{false, false, false, false}};
+    std::array<double, kMachineCount> m_baselines{{0.0, 0.0, 0.0, 0.0}};
+    std::array<double, kMachineCount> m_lastVoltages{{0.0, 0.0, 0.0, 0.0}};
+    std::array<double, kMachineCount> m_lastSignals{{0.0, 0.0, 0.0, 0.0}};
+
+    bool m_initialized{false};
+    double m_activeSignalThreshold{0.12};
+
     static bool isValidMachineId(int machineId);
+    static int indexForMachine(int machineId);
+    bool calibrateBaseline(int index);
+    bool readSignal(int index, double &averageVoltage, double &maxDeltaFromBaseline);
 };
 
 #endif // ADS1115CURRENTSENSORSERVICE_H

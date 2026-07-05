@@ -45,10 +45,10 @@ void MainWindow::setupUi() {
     adminAuthPage = new AdminAuthPage(this);
     adminSetupPage = new AdminDashboardPage(this);
 
-    stackedWidget->addWidget(homePage);          // 0: Home control máy giặt
-    stackedWidget->addWidget(confirmStartPage);  // 1: Nhập phòng + xác nhận bật máy
-    stackedWidget->addWidget(adminAuthPage);     // 2: Xác thực mật khẩu admin
-    stackedWidget->addWidget(adminSetupPage);    // 3: Admin setup
+    stackedWidget->addWidget(homePage);
+    stackedWidget->addWidget(confirmStartPage);
+    stackedWidget->addWidget(adminAuthPage);
+    stackedWidget->addWidget(adminSetupPage);
 }
 
 void MainWindow::setupConnections() {
@@ -80,7 +80,7 @@ void MainWindow::setupConnections() {
         }
 
         m_selectedMachineId = id;
-        confirmStartPage->setMachineAndCycle(machine, "Giặt thường", 45, 0);
+        confirmStartPage->setMachineAndCycle(machine, "Theo dòng điện", 0, 0);
         stackedWidget->setCurrentIndexWithFade(ConfirmStartIndex);
     });
 
@@ -109,9 +109,9 @@ void MainWindow::setupConnections() {
     connect(confirmStartPage, &ConfirmStartPage::startConfirmed,
             this, [this](int machineId, const QString &room) {
         WashCycle cycle;
-        cycle.name = "Giặt thường";
+        cycle.name = "Theo dòng điện";
         cycle.priceVnd = 0;
-        cycle.durationMinutes = 45;
+        cycle.durationMinutes = 0;
 
         if (machineController->startMachine(machineId, cycle, room)) {
             goHome();

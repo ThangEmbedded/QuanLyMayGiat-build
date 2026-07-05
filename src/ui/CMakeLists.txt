@@ -64,6 +64,6 @@ target_include_directories(laundry_kiosk PRIVATE
 target_link_libraries(laundry_kiosk PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     relay_driver
-    i2c_driver
     ads1115_driver
+    i2c_driver
 )
