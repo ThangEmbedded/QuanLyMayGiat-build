@@ -71,14 +71,18 @@ bool MachineController::startMachine(int machineId, const WashCycle &cycle, cons
         // return false;
     }
 
+    const int runMinutes = 2;
     const QTime start = QTime::currentTime();
     const QTime end = start.addSecs(cycle.durationMinutes * 60);
 
     machine->state = MachineState::Running;
     machine->claimer = QString("Phòng %1").arg(roomNumber);
-    machine->remaining = cycle.durationMinutes;
-    machine->total = cycle.durationMinutes;
-    machine->cycle = cycle.name;
+    // machine->remaining = cycle.durationMinutes;
+    // machine->total = cycle.durationMinutes;
+    // machine->cycle = cycle.name;
+    machine->remaining = runMinutes;
+    machine->total = runMinutes;
+    machine->cycle = "Giặt nhanh";
     machine->start = start.toString("HH:mm");
     machine->end = end.toString("HH:mm");
     machine->finishedHoldMinutes = 0;
