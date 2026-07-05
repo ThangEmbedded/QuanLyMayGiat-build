@@ -2,6 +2,7 @@
 #include "../../drivers/i2c/i2c.hpp"
 #include "../../drivers/i2c/i2c_config.hpp"
 #include <iostream>
+#include <optional>
 #include <memory>
 #include <thread>
 #include <chrono>

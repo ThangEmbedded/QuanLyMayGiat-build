@@ -16,6 +16,10 @@ constexpr uint16_t kModeSingleShot = 0x0100;
 constexpr uint16_t kDataRate128Sps = 0x0080;
 constexpr uint16_t kComparatorDisabled = 0x0003;
 
+constexpr uint16_t kMuxDiff0_1 = 0x0000;
+constexpr uint16_t kMuxDiff0_3 = 0x1000;
+constexpr uint16_t kMuxDiff1_3 = 0x2000;
+constexpr uint16_t kMuxDiff2_3 = 0x3000;
 constexpr uint16_t kMuxSingleEnded0 = 0x4000;
 constexpr uint16_t kMuxSingleEnded1 = 0x5000;
 constexpr uint16_t kMuxSingleEnded2 = 0x6000;
@@ -39,42 +43,57 @@ bool ADS1115::init()
 
 bool ADS1115::isConnected()
 {
-    return i2c.probe(ADS1115_I2C_ADDRESS);
+    if (!i2c.setSlave(ADS1115_I2C_ADDRESS)) {
+        return false;
+    }
+
+    uint16_t config = 0;
+    return readRegister(kConfigRegister, config);
+}
+
+std::optional<int16_t> ADS1115::readRawSingleEnded(int channel)
+{
+    if (!isValidChannel(channel)) {
+        return std::nullopt;
+    }
+    return readRawWithMux(getSingleEndedMuxConfig(channel));
+}
+
+std::optional<int16_t> ADS1115::readRawDifferential(DifferentialPair pair)
+{
+    return readRawWithMux(getDifferentialMuxConfig(pair));
+}
+
+std::optional<double> ADS1115::readVoltageSingleEnded(int channel)
+{
+    const auto rawValue = readRawSingleEnded(channel);
+    if (!rawValue.has_value()) {
+        return std::nullopt;
+    }
+
+    return static_cast<double>(*rawValue) * (kFullScaleVoltage / kAdcCounts);
+}
+
+std::optional<double> ADS1115::readVoltageDifferential(DifferentialPair pair)
+{
+    const auto rawValue = readRawDifferential(pair);
+    if (!rawValue.has_value()) {
+        return std::nullopt;
+    }
+
+    return static_cast<double>(*rawValue) * (kFullScaleVoltage / kAdcCounts);
 }
 
 int ADS1115::readRaw(int channel)
 {
-    if (!isValidChannel(channel)) {
-        return -1;
-    }
-
-    if (!i2c.setSlave(ADS1115_I2C_ADDRESS)) {
-        return -1;
-    }
-
-    const uint16_t config = getChannelConfig(channel);
-    if (!writeRegister(kConfigRegister, config)) {
-        return -1;
-    }
-
-    std::this_thread::sleep_for(kConversionDelay);
-
-    uint16_t raw = 0;
-    if (!readRegister(kConversionRegister, raw)) {
-        return -1;
-    }
-
-    return static_cast<int>(static_cast<int16_t>(raw));
+    const auto rawValue = readRawSingleEnded(channel);
+    return rawValue.has_value() ? static_cast<int>(*rawValue) : -1;
 }
 
 double ADS1115::readVoltage(int channel)
 {
-    const int rawValue = readRaw(channel);
-    if (rawValue == -1) {
-        return -1.0;
-    }
-
-    return static_cast<double>(rawValue) * (kFullScaleVoltage / kAdcCounts);
+    const auto voltage = readVoltageSingleEnded(channel);
+    return voltage.has_value() ? *voltage : -1.0;
 }
 
 bool ADS1115::configure()
@@ -83,8 +102,8 @@ bool ADS1115::configure()
         return false;
     }
 
-    // Default safe single-ended configuration for AIN0. readRaw() updates channel on every read.
-    return writeRegister(kConfigRegister, getChannelConfig(0));
+    // Default safe single-shot single-ended configuration for AIN0.
+    return writeRegister(kConfigRegister, buildConfig(kMuxSingleEnded0));
 }
 
 bool ADS1115::writeRegister(uint8_t reg, uint16_t value)
@@ -111,25 +130,58 @@ bool ADS1115::readRegister(uint8_t reg, uint16_t& value)
     return true;
 }
 
+std::optional<int16_t> ADS1115::readRawWithMux(uint16_t muxConfig)
+{
+    if (!i2c.setSlave(ADS1115_I2C_ADDRESS)) {
+        return std::nullopt;
+    }
+
+    if (!writeRegister(kConfigRegister, buildConfig(muxConfig))) {
+        return std::nullopt;
+    }
+
+    std::this_thread::sleep_for(kConversionDelay);
+
+    uint16_t raw = 0;
+    if (!readRegister(kConversionRegister, raw)) {
+        return std::nullopt;
+    }
+
+    return static_cast<int16_t>(raw);
+}
+
 bool ADS1115::isValidChannel(int channel)
 {
     return channel >= 0 && channel <= 3;
 }
 
-uint16_t ADS1115::getChannelConfig(int channel)
+uint16_t ADS1115::getSingleEndedMuxConfig(int channel)
 {
-    uint16_t mux = kMuxSingleEnded0;
-
     switch (channel) {
-        case 0: mux = kMuxSingleEnded0; break;
-        case 1: mux = kMuxSingleEnded1; break;
-        case 2: mux = kMuxSingleEnded2; break;
-        case 3: mux = kMuxSingleEnded3; break;
-        default: mux = kMuxSingleEnded0; break;
+        case 0: return kMuxSingleEnded0;
+        case 1: return kMuxSingleEnded1;
+        case 2: return kMuxSingleEnded2;
+        case 3: return kMuxSingleEnded3;
+        default: return kMuxSingleEnded0;
+    }
+}
+
+uint16_t ADS1115::getDifferentialMuxConfig(DifferentialPair pair)
+{
+    switch (pair) {
+        case DifferentialPair::Ain0Ain1: return kMuxDiff0_1;
+        case DifferentialPair::Ain0Ain3: return kMuxDiff0_3;
+        case DifferentialPair::Ain1Ain3: return kMuxDiff1_3;
+        case DifferentialPair::Ain2Ain3: return kMuxDiff2_3;
     }
 
+    return kMuxDiff0_1;
+}
+
+uint16_t ADS1115::buildConfig(uint16_t muxConfig)
+{
     return static_cast<uint16_t>(kOsStartSingleConversion |
-                                 mux |
+                                 muxConfig |
                                  kPga4096 |
                                  kModeSingleShot |
                                  kDataRate128Sps |

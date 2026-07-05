@@ -18,7 +18,7 @@ Demo này chỉ tập trung 3 màn chính:
    - Xem log thao tác
 
 Màn xác nhận bật máy là bước trung gian của flow Home -> Control -> Confirm -> Home.
-Hiện demo chỉ dùng `MockHardwareService`, chưa tích hợp relay/ADS1115.
+Runtime hiện dùng `MockHardwareService` cho phần business hardware legacy, nhưng relay thật qua `RelayHardwareService` và đo dòng thật qua `Ads1115CurrentSensorService`. Admin log sẽ ghi trạng thái ADS1115 mỗi 1 giây khi máy đang chạy.
 
 ## Build
 

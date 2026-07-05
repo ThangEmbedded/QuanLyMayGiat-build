@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -69,10 +70,15 @@ int main(int argc, char* argv[])
         std::cout << "\nChannel AIN" << channel << '\n';
         for (int sample = 0; sample < samples; ++sample)
         {
-            const int raw = ads.readRaw(channel);
-            const double voltage = ads.readVoltage(channel);
+            const auto rawOpt = ads.readRawSingleEnded(channel);
+            const auto voltageOpt = rawOpt.has_value()
+                    ? std::optional<double>(static_cast<double>(*rawOpt) * (4.096 / 32768.0))
+                    : std::nullopt;
 
-            const bool rawInRange = (raw >= -32768) && (raw <= 32767);
+            const int raw = rawOpt.value_or(0);
+            const double voltage = voltageOpt.value_or(0.0);
+
+            const bool rawInRange = rawOpt.has_value() && (raw >= -32768) && (raw <= 32767);
             ok &= expect(rawInRange, "TC04 raw value is int16 range");
 
             std::cout << "  sample " << (sample + 1)
@@ -83,8 +89,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    ok &= expect(ads.readRaw(-1) == 0, "TC05 invalid negative channel rejected");
-    ok &= expect(ads.readRaw(4) == 0, "TC06 invalid high channel rejected");
+    ok &= expect(!ads.readRawSingleEnded(-1).has_value(), "TC05 invalid negative channel rejected");
+    ok &= expect(!ads.readRawSingleEnded(4).has_value(), "TC06 invalid high channel rejected");
 
     i2c.close();
 

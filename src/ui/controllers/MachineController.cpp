@@ -44,7 +44,7 @@ bool MachineController::initialize() {
     }
 
     if (!m_currentSensorService || !m_currentSensorService->initialize()) {
-        emit logCreated("Cảnh báo: ADS1115 chưa sẵn sàng. Nếu không đo được dòng, máy sẽ tự trả về Trống sau timeout.");
+        emit logCreated("Cảnh báo: ADS1115 chưa sẵn sàng. Sensor lỗi sẽ được log, hệ thống không tự reset chỉ vì mất ADS1115.");
     } else {
         emit logCreated("ADS1115 đã sẵn sàng để đo dòng.");
     }
@@ -197,19 +197,38 @@ void MachineController::onSensorTick() {
         }
 
         const int machineId = machine.id;
-        const bool hasCurrent = m_currentSensorService && m_currentSensorService->hasCurrent(machineId);
-        const double voltage = m_currentSensorService ? m_currentSensorService->lastVoltage(machineId) : 0.0;
+        const ICurrentSensorService::CurrentReading reading = m_currentSensorService
+                ? m_currentSensorService->readMachineCurrentState(machineId)
+                : ICurrentSensorService::CurrentReading{};
 
         m_elapsedSeconds[machineId] = m_elapsedSeconds.value(machineId, 0) + 1;
         machine.total = std::max(0, m_elapsedSeconds.value(machineId) / 60);
         machine.remaining = 0;
 
-        if (hasCurrent) {
+        emit logCreated(QString("%1 - %2 ADS1115: %3, CH=%4, raw=%5, V=%6, active=%7, debounce=%8/%9")
+                        .arg(QTime::currentTime().toString("HH:mm:ss"))
+                        .arg(machine.name)
+                        .arg(reading.ok ? "OK" : "ERR")
+                        .arg(reading.channel)
+                        .arg(reading.raw)
+                        .arg(reading.voltage, 0, 'f', 4)
+                        .arg(reading.active ? "YES" : "NO")
+                        .arg(reading.debounceActiveCount)
+                        .arg(reading.debounceRequiredCount));
+
+        if (!reading.ok) {
+            // Sensor lỗi không đồng nghĩa với máy không có dòng. Không tự reset chỉ vì mất I2C/ADS1115.
+            emit machineUpdated(machine);
+            changed = true;
+            continue;
+        }
+
+        if (reading.active) {
             if (!m_currentDetectedOnce.value(machineId, false)) {
-                emit logCreated(QString("%1 - %2  ADS1115 (V=%3).")
-                                .arg(QTime::currentTime().toString("HH:mm"))
+                emit logCreated(QString("%1 - %2 xác nhận có dòng từ ADS1115 (V=%3).")
+                                .arg(QTime::currentTime().toString("HH:mm:ss"))
                                 .arg(machine.name)
-                                .arg(voltage, 0, 'f', 3));
+                                .arg(reading.voltage, 0, 'f', 4));
             }
             m_currentDetectedOnce[machineId] = true;
             m_noCurrentSeconds[machineId] = 0;
