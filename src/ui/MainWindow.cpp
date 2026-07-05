@@ -2,7 +2,6 @@
 #include "services/MockHardwareService.h"
 #include "services/MockRelayService.h"
 #include <QFile>
-#include <QMessageBox>
 #include <QTimer>
 #include <memory>
 
@@ -61,17 +60,9 @@ void MainWindow::setupConnections() {
 
     connect(machineController, &MachineController::operationFailed,
             this, [this](const QString &message) {
-        const QString lower = message.toLower();
-        if (lower.contains("relay")) {
-            // Relay errors are logged but do not block the kiosk UI with a modal popup.
-            // This avoids hiding the numeric keypad on Raspberry Pi when the relay driver
-            // is still settling after boot.
-            if (adminSetupPage) {
-                adminSetupPage->addLog(QString("Cảnh báo relay: %1").arg(message));
-            }
-            return;
+        if (adminSetupPage) {
+            adminSetupPage->addLog(QString("Cảnh báo: %1").arg(message));
         }
-        QMessageBox::warning(this, "Thao tác không thành công", message);
     });
 
     connect(homePage, &HomePage::machineSelected, this, [this](int id) {
@@ -80,7 +71,9 @@ void MainWindow::setupConnections() {
             return;
         }
         if (machine.state != MachineState::Open) {
-            QMessageBox::information(this, "Máy chưa sẵn sàng", "Chỉ có thể chọn máy đang trống.");
+            if (adminSetupPage) {
+                adminSetupPage->addLog(QString("Máy %1 chưa sẵn sàng.").arg(id));
+            }
             return;
         }
 
@@ -102,19 +95,10 @@ void MainWindow::setupConnections() {
     });
 
     connect(adminAuthPage, &AdminAuthPage::authFailed, this, [this]() {
-        QMessageBox *box = new QMessageBox(this);
-        box->setIcon(QMessageBox::Warning);
-        box->setWindowTitle("Sai mật khẩu");
-        box->setText("Sai mật khẩu. Tự động quay về Home sau 5 giây.");
-        box->setStandardButtons(QMessageBox::NoButton);
-
-        QTimer::singleShot(5000, box, [this, box]() {
-            box->close();
-            box->deleteLater();
-            goHome();
-        });
-
-        box->show();
+        if (adminSetupPage) {
+            adminSetupPage->addLog("Sai mật khẩu admin.");
+        }
+        QTimer::singleShot(5000, this, &MainWindow::goHome);
     });
 
     connect(confirmStartPage, &ConfirmStartPage::backRequested,

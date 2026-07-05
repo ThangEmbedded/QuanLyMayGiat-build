@@ -108,7 +108,7 @@ set_target_properties(ads1115_test PROPERTIES
 # Relay hardware test
 # =========================
 add_executable(relay_test
-    tests/hardware/relay_test.cpp
+    tests/hardware/relay_test/main.cpp
 )
 
 target_link_libraries(relay_test
@@ -121,3 +121,7 @@ target_link_libraries(relay_test
 set_target_properties(relay_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
 )
+# =========================
+# Main Qt kiosk application
+# =========================
+add_subdirectory(src/ui)
