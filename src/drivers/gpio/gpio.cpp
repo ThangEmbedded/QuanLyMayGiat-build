@@ -1,132 +1,190 @@
 #include "gpio.hpp"
+
 #include <gpiod.h>
+
 #include <map>
-#include <stdexcept>
+#include <mutex>
 
 namespace gpio
 {
+namespace
+{
+constexpr const char* kDefaultChipPath = "/dev/gpiochip0";
+constexpr const char* kConsumerName = "may_giat_gpio";
 
-static struct gpiod_chip* chip = nullptr;
-static struct gpiod_line_request* line_request_output = nullptr;
-static struct gpiod_line_request* line_request_input = nullptr;
+struct PinContext
+{
+    gpiod_line_request* request{nullptr};
+    Direction direction{Direction::Input};
+};
 
-static std::map<unsigned int, bool> initialized_pins;
+gpiod_chip* chip = nullptr;
+std::map<unsigned int, PinContext> pin_contexts;
+std::mutex gpio_mutex;
+
+void releasePinContext(PinContext& context)
+{
+    if (context.request != nullptr) {
+        gpiod_line_request_release(context.request);
+        context.request = nullptr;
+    }
+}
+
+bool requestLine(unsigned int pin, Direction direction)
+{
+    if (chip == nullptr) {
+        return false;
+    }
+
+    auto existing = pin_contexts.find(pin);
+    if (existing != pin_contexts.end()) {
+        if (existing->second.direction == direction) {
+            return true;
+        }
+
+        releasePinContext(existing->second);
+        pin_contexts.erase(existing);
+    }
+
+    gpiod_line_settings* settings = gpiod_line_settings_new();
+    if (settings == nullptr) {
+        return false;
+    }
+
+    if (direction == Direction::Output) {
+        gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_OUTPUT);
+        gpiod_line_settings_set_drive(settings, GPIOD_LINE_DRIVE_PUSH_PULL);
+        gpiod_line_settings_set_output_value(settings, GPIOD_LINE_VALUE_INACTIVE);
+    } else {
+        gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_INPUT);
+        gpiod_line_settings_set_bias(settings, GPIOD_LINE_BIAS_PULL_UP);
+    }
+
+    gpiod_line_config* line_cfg = gpiod_line_config_new();
+    if (line_cfg == nullptr) {
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    gpiod_line_config_add_line_settings(line_cfg, &pin, 1, settings);
+
+    gpiod_request_config* req_cfg = gpiod_request_config_new();
+    if (req_cfg == nullptr) {
+        gpiod_line_config_free(line_cfg);
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    gpiod_request_config_set_consumer(req_cfg, kConsumerName);
+
+    gpiod_line_request* request = gpiod_chip_request_lines(chip, req_cfg, line_cfg);
+
+    gpiod_request_config_free(req_cfg);
+    gpiod_line_config_free(line_cfg);
+    gpiod_line_settings_free(settings);
+
+    if (request == nullptr) {
+        return false;
+    }
+
+    pin_contexts[pin] = PinContext{request, direction};
+    return true;
+}
+} // namespace
+
+Gpio::~Gpio()
+{
+    deinit();
+}
 
 bool Gpio::init()
 {
-    chip = gpiod_chip_open("/dev/gpiochip0"); 
-    if (!chip) {
-        throw std::runtime_error("Failed to open GPIO chip /dev/gpiochip0");
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+
+    if (chip != nullptr) {
+        return true;
     }
-    return true;
+
+    chip = gpiod_chip_open(kDefaultChipPath);
+    return chip != nullptr;
+}
+
+void Gpio::deinit()
+{
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+
+    for (auto& [pin, context] : pin_contexts) {
+        (void)pin;
+        releasePinContext(context);
+    }
+    pin_contexts.clear();
+
+    if (chip != nullptr) {
+        gpiod_chip_close(chip);
+        chip = nullptr;
+    }
 }
 
 bool Gpio::setOutput(unsigned int pin)
 {
-    if (!chip) return false;
-
-    struct gpiod_line_settings* settings = gpiod_line_settings_new();
-    if (!settings) return false;
-
-    gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_OUTPUT);
-    
-    // ĐÃ CẬP NHẬT: Dùng PUSH_PULL đồng bộ theo file test vừa chạy tốt
-    gpiod_line_settings_set_drive(settings, GPIOD_LINE_DRIVE_PUSH_PULL);
-
-    struct gpiod_line_config* line_cfg = gpiod_line_config_new();
-    if (!line_cfg) {
-        gpiod_line_settings_free(settings);
-        return false;
-    }
-
-    gpiod_line_config_add_line_settings(line_cfg, &pin, 1, settings);
-
-    struct gpiod_request_config* req_cfg = gpiod_request_config_new();
-    if (!req_cfg) {
-        gpiod_line_config_free(line_cfg);
-        gpiod_line_settings_free(settings);
-        return false;
-    }
-    gpiod_request_config_set_consumer(req_cfg, "relay_may_giat");
-
-    line_request_output = gpiod_chip_request_lines(chip, req_cfg, line_cfg);
-
-    gpiod_request_config_free(req_cfg);
-    gpiod_line_config_free(line_cfg);
-    gpiod_line_settings_free(settings);
-
-    if (!line_request_output) {
-        return false;
-    }
-
-    initialized_pins[pin] = true;
-    return true;
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+    return requestLine(pin, Direction::Output);
 }
 
 bool Gpio::setInput(unsigned int pin)
 {
-    if (!chip) return false;
-
-    struct gpiod_line_settings* settings = gpiod_line_settings_new();
-    if (!settings) return false;
-
-    gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_INPUT);
-    gpiod_line_settings_set_bias(settings, GPIOD_LINE_BIAS_PULL_UP);
-
-    struct gpiod_line_config* line_cfg = gpiod_line_config_new();
-    if (!line_cfg) {
-        gpiod_line_settings_free(settings);
-        return false;
-    }
-
-    gpiod_line_config_add_line_settings(line_cfg, &pin, 1, settings);
-
-    struct gpiod_request_config* req_cfg = gpiod_request_config_new();
-    if (!req_cfg) {
-        gpiod_line_config_free(line_cfg);
-        gpiod_line_settings_free(settings);
-        return false;
-    }
-    gpiod_request_config_set_consumer(req_cfg, "input_may_giat");
-
-    line_request_input = gpiod_chip_request_lines(chip, req_cfg, line_cfg);
-
-    gpiod_request_config_free(req_cfg);
-    gpiod_line_config_free(line_cfg);
-    gpiod_line_settings_free(settings);
-
-    if (!line_request_input) {
-        return false;
-    }
-
-    initialized_pins[pin] = false;
-    return true;
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+    return requestLine(pin, Direction::Input);
 }
 
 bool Gpio::write(unsigned int pin, Level level)
 {
-    if (!line_request_output || initialized_pins.find(pin) == initialized_pins.end()) {
-        throw std::runtime_error("Pin not initialized as output");
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+
+    auto it = pin_contexts.find(pin);
+    if (it == pin_contexts.end() || it->second.direction != Direction::Output || it->second.request == nullptr) {
+        return false;
     }
 
-    enum gpiod_line_value val = (level == Level::High) ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE;
-    
-    return gpiod_line_request_set_values_subset(line_request_output, 1, &pin, &val) == 0;
+    const gpiod_line_value value = (level == Level::High) ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE;
+    return gpiod_line_request_set_values_subset(it->second.request, 1, &pin, &value) == 0;
 }
 
 Level Gpio::read(unsigned int pin)
 {
-    if (!line_request_input) {
-        throw std::runtime_error("Input lines not initialized");
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+
+    auto it = pin_contexts.find(pin);
+    if (it == pin_contexts.end() || it->second.direction != Direction::Input || it->second.request == nullptr) {
+        return Level::Low;
     }
 
-    enum gpiod_line_value val;
-    
-    if (gpiod_line_request_get_values_subset(line_request_input, 1, &pin, &val) < 0) {
-        throw std::runtime_error("Failed to read value from pin");
+    gpiod_line_value value = GPIOD_LINE_VALUE_INACTIVE;
+    if (gpiod_line_request_get_values_subset(it->second.request, 1, &pin, &value) < 0) {
+        return Level::Low;
     }
 
-    return (val == GPIOD_LINE_VALUE_ACTIVE) ? Level::High : Level::Low;
+    return (value == GPIOD_LINE_VALUE_ACTIVE) ? Level::High : Level::Low;
+}
+
+bool Gpio::isInitialized() const
+{
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+    return chip != nullptr;
+}
+
+bool Gpio::isOutput(unsigned int pin) const
+{
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+    auto it = pin_contexts.find(pin);
+    return it != pin_contexts.end() && it->second.direction == Direction::Output;
+}
+
+bool Gpio::isInput(unsigned int pin) const
+{
+    std::lock_guard<std::mutex> lock(gpio_mutex);
+    auto it = pin_contexts.find(pin);
+    return it != pin_contexts.end() && it->second.direction == Direction::Input;
 }
 
 } // namespace gpio
