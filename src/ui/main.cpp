@@ -1,22 +1,17 @@
 #include <QApplication>
-#include "MainWindow.h"
 
-#ifdef LAUNDRY_USE_REAL_RELAY
+#include "MainWindow.h"
 #include "services/RelayHardwareService.h"
+
 #include <memory>
-#endif
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-#ifdef LAUNDRY_USE_REAL_RELAY
-    MainWindow w(std::make_unique<RelayHardwareService>());
-#else
-    MainWindow w;
-#endif
-    w.setFixedSize(800, 480);
-    w.showFullScreen();
+    MainWindow window(std::make_unique<RelayHardwareService>());
+    window.setFixedSize(800, 480);
+    window.showFullScreen();
 
     return app.exec();
 }
