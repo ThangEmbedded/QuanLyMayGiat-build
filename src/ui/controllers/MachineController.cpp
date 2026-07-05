@@ -206,7 +206,7 @@ void MachineController::onSensorTick() {
 
         if (hasCurrent) {
             if (!m_currentDetectedOnce.value(machineId, false)) {
-                emit logCreated(QString("%1 - %2 đã phát hiện dòng ADS1115 (V=%3).")
+                emit logCreated(QString("%1 - %2  ADS1115 (V=%3).")
                                 .arg(QTime::currentTime().toString("HH:mm"))
                                 .arg(machine.name)
                                 .arg(voltage, 0, 'f', 3));
